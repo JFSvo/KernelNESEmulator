@@ -49,6 +49,8 @@ all: ./bin/boot.bin ./bin/kernel.bin
 ./build/disk/disk.o: ./src/disk/disk.c
 	i686-elf-gcc $(INCLUDES) -I./src/disk $(FLAGS) -std=gnu99 -c ./src/disk/disk.c -o ./build/disk/disk.o
 	
+
+	
 clean: 
 	rm -rf ./bin/boot.bin
 	rm -rf ./bin/kernel.bin
