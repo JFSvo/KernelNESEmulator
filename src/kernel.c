@@ -6,6 +6,10 @@
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
 #include "disk/disk.h"
+#include "disk/streamer.h"
+#include "string/string.h"
+#include "fs/pparser.h"
+#include "fs/file.h"
 
 uint16_t* video_mem = 0;  
 uint16_t terminal_row = 0;  
@@ -43,15 +47,6 @@ void terminal_initialize()  {
     }  
 }  
 
-size_t strlen(const char* str)  {  
-    size_t len = 0;  
-    while(str[len])  {  
-        len++;  
-    }  
-    
-    return len; 
-}  
-
 void print(const char* str)  {  
     size_t len = strlen(str);  
     for (int i = 0; i < len; i++)  {  
@@ -66,6 +61,8 @@ void kernel_main()  {
     print("Hello world!\ntest");  
 
     kheap_init();
+    
+    fs_init();
     
     idt_init();
 
@@ -84,4 +81,25 @@ void kernel_main()  {
     disk_search_and_init();
 
     enable_interrupts();
+
+    int fd = fopen("0:/hello.txt", "r");
+    if(fd){
+        print("\nWe opened hello.txt\n");
+        char buf[14];
+        // fread(buf, 13, 1, fd);
+        fseek(fd, 2, SEEK_SET);
+        fread(buf, 11, 1, fd);
+        buf[13] = 0x00;
+        print(buf);
+
+        struct file_stat s;
+        fstat(fd, &s);
+
+        fclose(fd);
+        print("\ntesting fclose\n");
+    }
+    
+
+    while(1) {} 
+
 }
