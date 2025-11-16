@@ -3,13 +3,28 @@
 #include <stdint.h>
 #include "idt/idt.h"
 #include "io/io.h"
+#include "memory/memory.h"
+#include "gdt/gdt.h"
+#include "config.h"
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
 #include "disk/disk.h"
 #include "disk/streamer.h"
+#include "task/tss.h"
 #include "string/string.h"
 #include "fs/pparser.h"
 #include "fs/file.h"
+
+struct tss tss; 
+struct gdt gdt_real[PEACHOS_TOTAL_GDT_SEGMENTS]; 
+struct gdt_structured gdt_structured[PEACHOS_TOTAL_GDT_SEGMENTS] = { 
+  {.base = 0x00, .limit = 0x00, .type = 0x00}, // NULL Segment 
+  {.base = 0x00, .limit = 0xffffffff, .type = 0x9a}, // Kernel code segment 
+  {.base = 0x00, .limit = 0xffffffff, .type = 0x92},// Kernel data segment 
+  {.base = 0x00, .limit = 0xffffffff, .type = 0xf8},// User code segment
+  {.base = 0x00, .limit = 0xffffffff, .type = 0xf2},// User data segment 
+  {.base = (uint32_t)&tss, .limit=sizeof(tss), .type = 0xE9}// TSS Segment
+};
 
 uint16_t* video_mem = 0;  
 uint16_t terminal_row = 0;  
@@ -54,11 +69,21 @@ void print(const char* str)  {
     }  
 }  
 
+void panic(const char*msg){
+    print(msg);
+    while(1) {}
+}
+
 static struct paging_4gb_chunk* kernel_chunk = 0;
 
 void kernel_main()  {  
     terminal_initialize();  
     print("Hello world!\ntest");  
+
+    // GDT CODE
+    memset(gdt_real, 0x00, sizeof(gdt_real)); 
+    gdt_structured_to_gdt(gdt_real, gdt_structured, PEACHOS_TOTAL_GDT_SEGMENTS); 
+    gdt_load(gdt_real, sizeof(gdt_real)); 
 
     kheap_init();
     
@@ -66,6 +91,11 @@ void kernel_main()  {
     
     idt_init();
 
+    // Setup the TSS 
+    memset(&tss, 0x00, sizeof(tss)); 
+    tss.esp0 = 0x600000; 
+    tss.ss0 = KERNEL_DATA_SELECTOR; 
+    
      // Setup paging
     kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     
