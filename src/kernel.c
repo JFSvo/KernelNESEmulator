@@ -14,6 +14,7 @@
 #include "string/string.h"
 #include "fs/pparser.h"
 #include "fs/file.h"
+#include "emulator/emulator.h"
 
 struct tss tss; 
 struct gdt gdt_real[PEACHOS_TOTAL_GDT_SEGMENTS]; 
@@ -66,6 +67,14 @@ void print(const char* str)  {
     size_t len = strlen(str);  
     for (int i = 0; i < len; i++)  {  
         terminal_writechar(str[i], 15);  
+    }  
+}  
+
+void printhex(const uint8_t* data, int size)  {  
+    for (int i = 1; i < size+1; i++) {
+        uint8_t byte = data[size-i];
+        terminal_writechar(gethexchar(byte >> 4), 15); 
+        terminal_writechar(gethexchar(byte & 0xF), 15);  
     }  
 }  
 
@@ -127,7 +136,11 @@ void kernel_main()  {
 
         fclose(fd);
         print("\ntesting fclose\n");
+        uint32_t test = 0xAB41C3;
+        printhex((uint8_t*)&test, sizeof(test));
     }
+
+    NES_run();
     
 
     while(1) {} 

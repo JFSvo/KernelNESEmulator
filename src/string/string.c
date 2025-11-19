@@ -98,3 +98,8 @@ bool isdigit(char c) {
 int tonumericdigit(char c) { 
     return c - 48; 
 }
+
+char gethexchar(unsigned int value){
+    static const char* digits = "0123456789ABCDEF";
+    return digits[value];
+}
