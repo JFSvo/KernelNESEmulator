@@ -71,8 +71,8 @@ void print(const char* str)  {
 }  
 
 void printhex(const uint8_t* data, int size)  {  
-    for (int i = 1; i < size+1; i++) {
-        uint8_t byte = data[size-i];
+    for (int i = 0; i < size+1; i++) {
+        uint8_t byte = data[i];
         terminal_writechar(gethexchar(byte >> 4), 15); 
         terminal_writechar(gethexchar(byte & 0xF), 15);  
     }  
@@ -87,7 +87,6 @@ static struct paging_4gb_chunk* kernel_chunk = 0;
 
 void kernel_main()  {  
     terminal_initialize();  
-    print("Hello world!\ntest");  
 
     // GDT CODE
     memset(gdt_real, 0x00, sizeof(gdt_real)); 
@@ -121,7 +120,7 @@ void kernel_main()  {
 
     enable_interrupts();
 
-    NES_run();
+    NES_run("0:/test1.nes");
 
     while(1) {} 
 
