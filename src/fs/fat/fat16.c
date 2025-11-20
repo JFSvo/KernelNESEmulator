@@ -459,6 +459,11 @@ struct fat_item* fat16_find_item_in_directory(struct disk* disk, struct fat_dire
 
     for (int i = 0; i < directory->total; i++){ 
         fat16_get_full_relative_filename(&directory->item[i], tmp_filename, sizeof(tmp_filename)); 
+        // print("'");
+        // print(name);
+        // print("' : '");
+        // print(tmp_filename);
+        // print("'\n");
         if (istrncmp(tmp_filename, name, sizeof(tmp_filename)) == 0) { 
             // Found it lets create a new fat_item 
             f_item = fat16_new_fat_item_for_directory_item(disk, &directory->item[i]); 
@@ -472,6 +477,7 @@ struct fat_item* fat16_get_directory_entry(struct disk* disk, struct path_part* 
     struct fat_item* current_item = 0; 
     struct fat_item* root_item = fat16_find_item_in_directory(disk, &fat_private->root_directory, path->part); 
     if (!root_item) { 
+        print("no root item\n");
         goto out; 
     } 
     struct path_part* next_part = path->next; 
@@ -546,6 +552,7 @@ void* fat16_open(struct disk* disk, struct path_part* path, FILE_MODE mode) {
     
     descriptor->item = fat16_get_directory_entry(disk, path); 
     if (!descriptor->item) { 
+        print("IO error\n");
         return ERROR(-EIO); 
     } 
     

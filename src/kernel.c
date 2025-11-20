@@ -121,27 +121,7 @@ void kernel_main()  {
 
     enable_interrupts();
 
-    int fd = fopen("0:/hello.txt", "r");
-    if(fd){
-        print("\nWe opened hello.txt\n");
-        char buf[14];
-        // fread(buf, 13, 1, fd);
-        fseek(fd, 2, SEEK_SET);
-        fread(buf, 11, 1, fd);
-        buf[13] = 0x00;
-        print(buf);
-
-        struct file_stat s;
-        fstat(fd, &s);
-
-        fclose(fd);
-        print("\ntesting fclose\n");
-        uint32_t test = 0xAB41C3;
-        printhex((uint8_t*)&test, sizeof(test));
-    }
-
     NES_run();
-    
 
     while(1) {} 
 
