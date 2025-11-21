@@ -32,21 +32,14 @@ void reset(){
     int fd = fopen(emu.filepath, "r");
     if(fd){
         print("Opened test1.nes\n");
-        //fread(emu.header, 0x10, 1, fd);
-        fseek(fd, 0x7FFF, SEEK_SET);
-        fread(emu.ROM, 0x20, 1, fd);
+        fread(emu.header, 0x10, 1, fd);
+        fseek(fd, 0x10, SEEK_SET);
+        fread(emu.ROM, 0x8000, 1, fd);
     }
-    print_hexdump(emu.ROM, 0x360);
-    print("\n");
-    read(0x8002);
-    print("\n");
-    uint8_t PClowbyte = read(0x7FFC);
-    uint8_t PChighbyte = read(0x7FFE);
+
+    uint8_t PClowbyte = read(0xFFFC);
+    uint8_t PChighbyte = read(0xFFFD);
     emu.registers->programCounter = (PChighbyte << 8) | PClowbyte;
     print_hex16(emu.registers->programCounter);
     print("\n");
-    print_hex16(0xA2B1);
-    // printhex(emu.header, 0x10);
-    // print("\n\n");
-    // printhex(emu.ROM, 0x20);
 }
