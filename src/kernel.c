@@ -78,6 +78,15 @@ void print_hexdump(const uint8_t* data, int size)  {
     }  
 }  
 
+void emu_print_hexdump(uint16_t emu_address, int size)  {  
+    for (int i = 0; i < size+1; i++) {
+        uint8_t byte = emu_read(emu_address+i);
+        terminal_writechar(gethexchar(byte >> 4), 15); 
+        terminal_writechar(gethexchar(byte & 0xF), 15);
+        terminal_writechar(' ', 0);    
+    }  
+}  
+
 void print_hex8(uint8_t value)  {  
     terminal_writechar(gethexchar(value >> 4), 15); 
     terminal_writechar(gethexchar(value & 0xF), 15);  
@@ -130,7 +139,7 @@ void kernel_main()  {
 
     enable_interrupts();
 
-    NES_run();
+    emu_init();
 
     while(1) {} 
 

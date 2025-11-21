@@ -17,6 +17,7 @@ void kernel_main();
 void print(const char* str);
 void panic(const char* msg);
 void print_hexdump(const uint8_t* data, int size);
+void emu_print_hexdump(uint16_t emu_address, int size);
 void print_hex8(uint8_t value);
 void print_hex16(uint16_t value);
 
