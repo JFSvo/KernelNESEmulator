@@ -70,12 +70,22 @@ void print(const char* str)  {
     }  
 }  
 
-void printhex(const uint8_t* data, int size)  {  
+void print_hexdump(const uint8_t* data, int size)  {  
     for (int i = 0; i < size+1; i++) {
         uint8_t byte = data[i];
         terminal_writechar(gethexchar(byte >> 4), 15); 
         terminal_writechar(gethexchar(byte & 0xF), 15);  
     }  
+}  
+
+void print_hex8(uint8_t value)  {  
+    terminal_writechar(gethexchar(value >> 4), 15); 
+    terminal_writechar(gethexchar(value & 0xF), 15);  
+}  
+
+void print_hex16(uint16_t value)  {  
+    print_hex8((value >> 8) & 0xFF); 
+    print_hex8(value & 0xFF);  
 }  
 
 void panic(const char*msg){
@@ -120,7 +130,7 @@ void kernel_main()  {
 
     enable_interrupts();
 
-    NES_run("0:/test1.nes");
+    NES_run();
 
     while(1) {} 
 

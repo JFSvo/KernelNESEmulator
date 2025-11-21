@@ -19,6 +19,7 @@ struct emulator {
 
     uint8_t* RAM;
     uint8_t* ROM;
+    uint8_t* header;
 }; 
 
 void NES_run();
