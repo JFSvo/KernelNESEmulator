@@ -1,15 +1,24 @@
 #ifndef TRACELOGGER_H
 #define TRACELOGGER_H
 
+#include "emulator/emulator.h"
+
 #define TRACELOG_MAX_LENGTH 256
 
 struct tracelog_entry {
-    uint16_t address;
+    // The next entry in the tracelog 
+    struct tracelog_entry* next;
+    // Previous entry in the tracelog 
+    struct tracelog_entry* prev;
+
     uint8_t opcode;
-    uint8_t A; 
-    uint8_t X;
-    uint8_t Y;
-    uint8_t flags;
+    int total_CPU_cycles;
+
+    struct registers registers;
 };
+
+struct tracelog_entry* add_tracelog_entry(struct emulator* emu);
+void remove_first_entry();
+void init_log_entry(struct tracelog_entry* entry, struct emulator* emu);
 
 #endif

@@ -139,6 +139,7 @@ void kernel_main()  {
 
     enable_interrupts();
 
+    emu_enable_logger(true);
     emu_init();
 
     while(1) {} 

@@ -10,6 +10,7 @@
 
 struct emulator emu;
 bool CPU_halted;
+bool logger_enabled = false;
 
 void emu_init()  { 
 
@@ -22,14 +23,12 @@ void emu_init()  {
 }
 
 void emulate_CPU() {
-    uint8_t CPU_cycles;
-    print("program counter: ");
-    print_hex16(emu.registers.program_counter);
-    print("   ");
+    uint8_t CPU_cycles = 0;
+
     uint8_t opcode = emu_read(emu.registers.program_counter);
-    print("opcode is: ");
-    print_hex8(opcode);
-    print("   ");
+    emu.current_opcode = opcode;
+    add_tracelog_entry(&emu);
+    
     emu.registers.program_counter++;
 
     uint8_t address;
@@ -40,7 +39,6 @@ void emulate_CPU() {
         case 0x02: // HLT
             CPU_halted = true;
             CPU_cycles = 2;
-            print("HALT CPU");
             break;
         case 0xA0: // LDY Immediate 
             emu.registers.Y = emu_read(emu.registers.program_counter++);
@@ -80,6 +78,7 @@ void emulate_CPU() {
             PC_lowbyte = emu_read(emu.registers.program_counter++);
             PC_highbyte = emu_read(emu.registers.program_counter++);
             address = (uint16_t)((PC_highbyte << 8) | PC_lowbyte);
+            emu_write(address, emu.registers.A);
             CPU_cycles = 4;
             break;
 
@@ -87,9 +86,8 @@ void emulate_CPU() {
             // unknown opcode
             break;
     }
-    print("\n");
-    // temp. to stop compiler complaining
-    CPU_cycles = CPU_cycles;
+
+    emu.total_CPU_cycles += CPU_cycles;
 }
 
 void emu_run() { 
@@ -140,5 +138,9 @@ void set_status_flag(uint8_t flag, bool condition){
     } else {
         emu.registers.flags &= ~flag;
     }
+}
+
+void emu_enable_logger(bool is_enabled){
+    logger_enabled = is_enabled;
 }
 

@@ -30,7 +30,12 @@ struct emulator {
     uint8_t* RAM;
     uint8_t* ROM;
     uint8_t* header;
+
+    uint8_t current_opcode;
+    int total_CPU_cycles;
 }; 
+
+void emu_enable_logger(bool is_enabled);
 
 void emu_init();
 void emu_reset();
