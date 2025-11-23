@@ -1,6 +1,5 @@
-
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/string/string.o ./build/fs/pparser.o ./build/disk/streamer.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/task/tss.asm.o ./build/task/task.o ./build/task/task.asm.o ./build/task/process.o ./build/emulator/emulator.o ./build/emulator/tracelogger.o 
-INCLUDES = -I./src
+FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/string/string.o ./build/fs/pparser.o ./build/disk/streamer.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/task/tss.asm.o ./build/task/task.o ./build/task/task.asm.o ./build/task/process.o ./build/emulator/emulator.o ./build/emulator/tracelogger.o ./build/emulator/opcode_table.o
+INCLUDES = -I ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc 
 
 all: ./bin/boot.bin ./bin/kernel.bin user_programs
@@ -53,25 +52,25 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 	nasm -f elf -g ./src/memory/paging/paging.asm -o ./build/memory/paging/paging.asm.o
 
 ./build/disk/disk.o: ./src/disk/disk.c
-	i686-elf-gcc $(INCLUDES) -I./src/disk $(FLAGS) -std=gnu99 -c ./src/disk/disk.c -o ./build/disk/disk.o
+	i686-elf-gcc $(INCLUDES) -I ./src/disk $(FLAGS) -std=gnu99 -c ./src/disk/disk.c -o ./build/disk/disk.o
 	
 ./build/string/string.o: ./src/string/string.c 
-	i686-elf-gcc $(INCLUDES) -I./src/string $(FLAGS) -std=gnu99 -c ./src/string/string.c -o ./build/string/string.o
+	i686-elf-gcc $(INCLUDES) -I ./src/string $(FLAGS) -std=gnu99 -c ./src/string/string.c -o ./build/string/string.o
 
 ./build/fs/pparser.o: ./src/fs/pparser.c 
-	i686-elf-gcc $(INCLUDES) -I./src/fs $(FLAGS) -std=gnu99 -c ./src/fs/pparser.c -o ./build/fs/pparser.o
+	i686-elf-gcc $(INCLUDES) -I ./src/fs $(FLAGS) -std=gnu99 -c ./src/fs/pparser.c -o ./build/fs/pparser.o
 
 ./build/disk/streamer.o: ./src/disk/streamer.c 
-	i686-elf-gcc $(INCLUDES) -I./src/disk $(FLAGS) -std=gnu99 -c ./src/disk/streamer.c -o ./build/disk/streamer.o
+	i686-elf-gcc $(INCLUDES) -I ./src/disk $(FLAGS) -std=gnu99 -c ./src/disk/streamer.c -o ./build/disk/streamer.o
 
 ./build/fs/file.o: ./src/fs/file.c 
-	i686-elf-gcc $(INCLUDES) -I./src/fs $(FLAGS) -std=gnu99 -c ./src/fs/file.c -o ./build/fs/file.o
+	i686-elf-gcc $(INCLUDES) -I ./src/fs $(FLAGS) -std=gnu99 -c ./src/fs/file.c -o ./build/fs/file.o
 
 ./build/fs/fat/fat16.o: ./src/fs/fat/fat16.c 
-	i686-elf-gcc $(INCLUDES) -I./src/fs -I./src/fat $(FLAGS) -std=gnu99 -c ./src/fs/fat/fat16.c -o ./build/fs/fat/fat16.o
+	i686-elf-gcc $(INCLUDES) -I ./src/fs -I ./src/fat $(FLAGS) -std=gnu99 -c ./src/fs/fat/fat16.c -o ./build/fs/fat/fat16.o
 
 ./build/gdt/gdt.o: ./src/gdt/gdt.c 
-	i686-elf-gcc $(INCLUDES) -I./src/gdt $(FLAGS) -std=gnu99 -c ./src/gdt/gdt.c -o ./build/gdt/gdt.o 
+	i686-elf-gcc $(INCLUDES) -I ./src/gdt $(FLAGS) -std=gnu99 -c ./src/gdt/gdt.c -o ./build/gdt/gdt.o 
 	
 ./build/gdt/gdt.asm.o: ./src/gdt/gdt.asm 
 	nasm -f elf -g ./src/gdt/gdt.asm -o ./build/gdt/gdt.asm.o
@@ -80,19 +79,22 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 	nasm -f elf -g ./src/task/tss.asm -o ./build/task/tss.asm.o
 
 ./build/task/task.o: ./src/task/task.c 
-	i686-elf-gcc $(INCLUDES) -I./src/task $(FLAGS) -std=gnu99 -c ./src/task/task.c -o ./build/task/task.o
+	i686-elf-gcc $(INCLUDES) -I ./src/task $(FLAGS) -std=gnu99 -c ./src/task/task.c -o ./build/task/task.o
 	
 ./build/task/process.o: ./src/task/process.c 
-	i686-elf-gcc $(INCLUDES) -I./src/task $(FLAGS) -std=gnu99 -c ./src/task/process.c -o ./build/task/process.o
+	i686-elf-gcc $(INCLUDES) -I ./src/task $(FLAGS) -std=gnu99 -c ./src/task/process.c -o ./build/task/process.o
 
 ./build/task/task.asm.o: ./src/task/task.asm 
 	nasm -f elf -g ./src/task/task.asm -o ./build/task/task.asm.o
 
 ./build/emulator/emulator.o: ./src/emulator/emulator.c 
-	i686-elf-gcc $(INCLUDES) -I./src/task $(FLAGS) -std=gnu99 -c ./src/emulator/emulator.c -o ./build/emulator/emulator.o
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/emulator.c -o ./build/emulator/emulator.o
 
 ./build/emulator/tracelogger.o: ./src/emulator/tracelogger.c 
-	i686-elf-gcc $(INCLUDES) -I./src/task $(FLAGS) -std=gnu99 -c ./src/emulator/tracelogger.c -o ./build/emulator/tracelogger.o
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/tracelogger.c -o ./build/emulator/tracelogger.o
+
+./build/emulator/opcode_table.o: ./src/emulator/opcode_table.c 
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/opcode_table.c -o ./build/emulator/opcode_table.o
 
 user_programs: 
 	cd ./programs/blank && $(MAKE) all 

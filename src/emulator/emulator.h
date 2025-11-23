@@ -44,4 +44,7 @@ uint8_t emu_read(uint16_t address);
 void emu_write(uint16_t address, uint8_t value);
 void set_status_flag(uint8_t flag, bool condition);
 
+extern struct emulator emu;
+
+
 #endif

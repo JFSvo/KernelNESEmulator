@@ -20,5 +20,6 @@ struct tracelog_entry {
 struct tracelog_entry* add_tracelog_entry(struct emulator* emu);
 void remove_first_entry();
 void init_log_entry(struct tracelog_entry* entry, struct emulator* emu);
+void print_tracelog();
 
 #endif
