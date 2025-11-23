@@ -24,6 +24,13 @@ enum {
     MODE_UNKNOWN
 }; 
 
+// Used for comparing register access/writes with opcode table bitflags 
+#define REG_STATUS  0x01
+#define REG_STACK   0x02
+#define REG_Y       0x04
+#define REG_X       0x08
+#define REG_A       0x10
+
 struct opcode_entry {
     uint8_t opcode;
     char* mnemonic;

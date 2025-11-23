@@ -100,6 +100,8 @@ void print_tracelog() {
         print(flags & FLAG_INTERRUPT_DISABLE ? "I" : "i");
         print(flags & FLAG_ZERO ? "Z" : "z");
         print(flags & FLAG_CARRY ? "C" : "c");
+        print(" Cycle:");
+        print_decimal(cur_log_entry->total_CPU_cycles);
         print("\n");
 
         cur_log_entry = cur_log_entry->next;

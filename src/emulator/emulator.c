@@ -17,14 +17,13 @@ void emu_init()  {
     emu.RAM = kzalloc(0x800);
     emu.ROM = kzalloc(0x8000);
     emu.header = kzalloc(0x10);
-    emu.filepath = "0:/test2.nes";
+    emu.total_CPU_cycles = 8;
+    emu.filepath = "0:/test1.nes";
     CPU_halted = false;
     emu_reset();
 }
 
 void emulate_CPU() {
-    uint8_t CPU_cycles = 0;
-
     uint8_t opcode = emu_read(emu.registers.program_counter);
     emu.current_opcode = opcode;
     add_tracelog_entry(&emu);
@@ -38,65 +37,49 @@ void emulate_CPU() {
     switch(opcode){
         case 0x02: // HLT
             CPU_halted = true;
-            CPU_cycles = 2;
             break;
 
         case 0xA0: // LDY Immediate 
-            set_Y_register(emu_read(program_counter()));
-            increment_PC();
+            set_Y_register(read_increment_PC());
             set_status_flag(FLAG_ZERO, reg_Y() == 0);
-            CPU_cycles = 2;
             break;
 
         case 0xA2: // LDX Immediate 
-            set_X_register(emu_read(program_counter()));
-            increment_PC();
+            set_X_register(read_increment_PC());
             set_status_flag(FLAG_ZERO, reg_X() == 0);
-            CPU_cycles = 2;
             break;
 
         case 0xA9: // LDA Immediate 
-            set_A_register(emu_read(program_counter()));
-            increment_PC();
+            set_A_register(read_increment_PC());
             set_status_flag(FLAG_ZERO, reg_A() == 0);
-            CPU_cycles = 2;
             break;
 
         case 0xA5: ; // LDA Zero Page
-            address = emu_read(program_counter());
-            increment_PC();
-
+            address = read_increment_PC();
             set_A_register(emu_read(address));
             set_status_flag(FLAG_ZERO, reg_A() == 0);
-            CPU_cycles = 3;
             break;
 
         case 0xAD: ; // LDA Absolute
-            PC_lowbyte = emu_read(program_counter());
-            increment_PC();
-            PC_highbyte = emu_read(program_counter());
-            increment_PC();
+            PC_lowbyte = read_increment_PC();
+            PC_highbyte = read_increment_PC();
             address = (uint16_t)((PC_highbyte << 8) | PC_lowbyte);
 
             set_A_register(emu_read(address));
             set_status_flag(FLAG_ZERO, reg_A() == 0);
-            CPU_cycles = 4;
             break;
-        case 0x85: ; // STA Zero Page
-            address = emu_read(program_counter());
-            increment_PC();
-            emu_write(address, reg_A());
-            CPU_cycles = 3;
-            break;
-        case 0x8D: ; // STA Absolute
-            PC_lowbyte = emu_read(program_counter());
-            increment_PC();
-            PC_highbyte = emu_read(program_counter());
-            increment_PC();
 
-            address = (uint16_t)((PC_highbyte << 8) | PC_lowbyte);
+        case 0x85: ; // STA Zero Page
+            address = read_increment_PC();
             emu_write(address, reg_A());
-            CPU_cycles = 4;
+            break;
+
+        case 0x8D: ; // STA Absolute
+            PC_lowbyte = read_increment_PC();
+            PC_highbyte = read_increment_PC();
+            address = (uint16_t)((PC_highbyte << 8) | PC_lowbyte);
+
+            emu_write(address, reg_A());
             break;
 
         default:
@@ -104,7 +87,7 @@ void emulate_CPU() {
             break;
     }
 
-    emu.total_CPU_cycles += CPU_cycles;
+    emu.total_CPU_cycles += opcode_table[opcode].cycles;
 }
 
 void emu_run() { 
@@ -157,6 +140,9 @@ void set_status_flag(uint8_t flag, bool condition){
     } else {
         emu.registers.flags &= ~flag;
     }
+    #if DEBUG
+    mem_reg_access.reg_write_bitflag |= REG_STATUS; 
+    #endif 
 }
 
 void emu_enable_logger(bool is_enabled){

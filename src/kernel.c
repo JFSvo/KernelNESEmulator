@@ -97,6 +97,25 @@ void print_hex16(uint16_t value)  {
     print_hex8(value & 0xFF);  
 }  
 
+void print_decimal(uint8_t value) {
+    if (value == 0) {
+        terminal_writechar('0', 15);
+        return;
+    }
+
+    char digits[3];
+    int i = 0;
+
+    while (value > 0) {
+        digits[i++] = (value % 10) + '0';
+        value /= 10;
+    }
+
+    for (int j = i-1; j >= 0; j--) {
+        terminal_writechar(digits[j], 15);
+    }
+}
+
 void panic(const char*msg){
     print(msg);
     while(1) {}
