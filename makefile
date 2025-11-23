@@ -2,7 +2,7 @@ FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/
 INCLUDES = -I ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc 
 
-all: ./bin/boot.bin ./bin/kernel.bin user_programs
+all: ./bin/boot.bin ./bin/kernel.bin
 	rm -rf ./bin/os.bin 
 	dd if=./bin/boot.bin >> ./bin/os.bin 
 	dd if=./bin/kernel.bin >> ./bin/os.bin 
@@ -94,15 +94,9 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/tracelogger.c -o ./build/emulator/tracelogger.o
 
 ./build/emulator/opcode_table.o: ./src/emulator/opcode_table.c 
-	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/opcode_table.c -o ./build/emulator/opcode_table.o
-
-user_programs: 
-	cd ./programs/blank && $(MAKE) all 
-
-user_programs_clean: 
-	cd ./programs/blank && $(MAKE) clean
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/opcode_table.c -o ./build/emulator/opcode_table.o 
 	
-clean: user_programs_clean
+clean:
 	rm -rf ./bin/boot.bin
 	rm -rf ./bin/kernel.bin
 	rm -rf ./bin/os.bin
