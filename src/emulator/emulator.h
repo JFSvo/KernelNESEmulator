@@ -1,6 +1,9 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
+#define DEBUG true
+#define TRACELOGGER true
+
 #define RAM_SIZE 800 
 #define ROM_SIZE 8000 
 

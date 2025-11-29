@@ -1,4 +1,4 @@
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/string/string.o ./build/fs/pparser.o ./build/disk/streamer.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/task/tss.asm.o ./build/task/task.o ./build/task/task.asm.o ./build/task/process.o ./build/emulator/emulator.o ./build/emulator/tracelogger.o ./build/emulator/opcode_table.o
+FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/string/string.o ./build/fs/pparser.o ./build/disk/streamer.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/task/tss.asm.o ./build/task/task.o ./build/task/task.asm.o ./build/task/process.o ./build/emulator/emulator.o ./build/emulator/tracelogger.o ./build/emulator/opcode_table.o ./build/emulator/emulator_debug.o
 INCLUDES = -I ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc 
 
@@ -7,7 +7,7 @@ all: ./bin/boot.bin ./bin/kernel.bin
 	dd if=./bin/boot.bin >> ./bin/os.bin 
 	dd if=./bin/kernel.bin >> ./bin/os.bin 
 	dd if=/dev/zero bs=1048576 count=16 >> ./bin/os.bin
-	mkdir -p /mnt/d
+	sudo mkdir -p /mnt/d
 	sudo mount -t vfat ./bin/os.bin /mnt/d
 	# Copy a file over
 	sudo cp ./hello.txt /mnt/d
@@ -95,6 +95,9 @@ all: ./bin/boot.bin ./bin/kernel.bin
 
 ./build/emulator/opcode_table.o: ./src/emulator/opcode_table.c 
 	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/opcode_table.c -o ./build/emulator/opcode_table.o 
+	
+./build/emulator/emulator_debug.o: ./src/emulator/emulator_debug.c 
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/emulator_debug.c -o ./build/emulator/emulator_debug.o 
 	
 clean:
 	rm -rf ./bin/boot.bin

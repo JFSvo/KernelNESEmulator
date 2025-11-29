@@ -37,8 +37,8 @@ struct opcode_entry {
     ADDRESSING_MODE addr_mode;
     uint8_t num_bytes;
     uint8_t cycles;
-    uint8_t reg_access_flag;
-    uint8_t reg_write_flag;
+    uint8_t reg_read_bitflag;
+    uint8_t reg_write_bitflag;
     bool reads_mem;
     bool writes_mem;
 };
