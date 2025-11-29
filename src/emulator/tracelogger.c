@@ -84,7 +84,9 @@ void print_tracelog() {
         const struct opcode_entry* opcode_entry = &opcode_table[cur_log_entry->opcode];
         print(" ");
         print(opcode_entry->mnemonic);
-        print("     ");
+        print("  ");
+        print_hex8(cur_log_entry->opcode);
+        print("  ");
         print("A:");
         print_hex8(cur_log_entry->registers.A);
         print(" X:");

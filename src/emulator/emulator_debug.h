@@ -51,6 +51,10 @@ static inline uint8_t reg_Y(void) {
     debug_tracker.reg_read_bitflag |= REG_Y;
     return emu.registers.Y; 
 }
+static inline uint8_t reg_status(void) {
+    debug_tracker.reg_read_bitflag |= REG_STATUS;
+    return emu.registers.flags; 
+}
 
 #else
 static inline uint8_t set_A_register(uint8_t value) { emu.registers.A = value; return value;}
@@ -61,6 +65,8 @@ static inline uint8_t reg_X(void) { return emu.registers.X; }
 
 static inline uint8_t set_Y_register(uint8_t value) { emu.registers.Y = value; return value;}
 static inline uint8_t reg_Y(void) { return emu.registers.Y; }
+
+static inline uint8_t reg_status(void) { return emu.registers.flags;}
 #endif
 
 static inline uint8_t set_PC(uint16_t value) { emu.registers.program_counter = value; return value;}

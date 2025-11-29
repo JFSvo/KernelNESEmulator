@@ -18,7 +18,7 @@ void emu_init()  {
     emu.ROM = kzalloc(0x8000);
     emu.header = kzalloc(0x10);
     emu.total_CPU_cycles = 8;
-    emu.filepath = "0:/test2.nes";
+    emu.filepath = "0:/test3.nes";
     CPU_halted = false;
     emu_reset();
 }
@@ -36,9 +36,10 @@ void emulate_CPU() {
     emu.registers.program_counter++;
 
     uint8_t result;
-    uint8_t address;
+    uint16_t address;
     uint8_t PC_lowbyte;
     uint8_t PC_highbyte;
+    int signed_value;
 
     switch(opcode){
         case 0x02: // HLT
@@ -48,31 +49,36 @@ void emulate_CPU() {
         case 0xA0: // LDY Immediate 
             result = set_Y_register(read_increment_PC());
             set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
             break;
 
         case 0xA2: // LDX Immediate 
             result = set_X_register(read_increment_PC());
             set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
             break;
 
         case 0xA9: // LDA Immediate 
             result = set_A_register(read_increment_PC());
             set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
             break;
 
         case 0xA5: ; // LDA Zero Page
             address = read_increment_PC();
             result = set_A_register(emu_read(address));
             set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
             break;
 
         case 0xAD: ; // LDA Absolute
             PC_lowbyte = read_increment_PC();
             PC_highbyte = read_increment_PC();
-            address = (uint16_t)((PC_highbyte << 8) | PC_lowbyte);
+            address = (PC_highbyte << 8) | PC_lowbyte;
 
             result = set_A_register(emu_read(address));
             set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
             break;
 
         case 0x85: ; // STA Zero Page
@@ -83,9 +89,105 @@ void emulate_CPU() {
         case 0x8D: ; // STA Absolute
             PC_lowbyte = read_increment_PC();
             PC_highbyte = read_increment_PC();
-            address = (uint16_t)((PC_highbyte << 8) | PC_lowbyte);
+            address = (PC_highbyte << 8) | PC_lowbyte;
 
             emu_write(address, reg_A());
+            break;
+
+        case 0xD0: ; // BNE
+            result = read_increment_PC();
+            if(!(reg_status() & FLAG_ZERO)){ // Branch taken if zero flag cleared
+                signed_value = result;
+                if(signed_value > 127){
+                    signed_value -= 256;
+                }
+                set_PC((uint16_t)((int)program_counter() + signed_value));
+                emu.total_CPU_cycles++;
+            }
+            break;
+
+        case 0xF0: ; // BEQ
+            result = read_increment_PC();
+            if(reg_status() & FLAG_ZERO){ // Branch taken if zero flag set
+                signed_value = result;
+                if(signed_value > 127){
+                    signed_value -= 256;
+                }
+                set_PC((uint16_t)((int)program_counter() + signed_value));
+                emu.total_CPU_cycles++;
+            }
+            break;
+
+        case 0x10: ; // BPL
+            result = read_increment_PC();
+            if(!(reg_status() & FLAG_NEGATIVE)){ // Branch if negative flag cleared
+                signed_value = result;
+                if(signed_value > 127){
+                    signed_value -= 256;
+                }
+                set_PC((uint16_t)((int)program_counter() + signed_value));
+                emu.total_CPU_cycles++;
+            }
+            break;
+
+        case 0x30: ; // BMI
+            result = read_increment_PC();
+            if(reg_status() & FLAG_NEGATIVE){ // Branch if negative flag set
+                signed_value = result;
+                if(signed_value > 127){
+                    signed_value -= 256;
+                }
+                set_PC((uint16_t)((int)program_counter() + signed_value));
+                emu.total_CPU_cycles++;
+            }
+            break;
+
+        case 0x50: ; // BVC
+            result = read_increment_PC();
+            if(!(reg_status() & FLAG_OVERFLOW)){ // Branch if overflow flag cleared
+                signed_value = result;
+                if(signed_value > 127){
+                    signed_value -= 256;
+                }
+                set_PC((uint16_t)((int)program_counter() + signed_value));
+                emu.total_CPU_cycles++;
+            }
+            break;
+
+        case 0x70: ; // BVS
+            result = read_increment_PC();
+            if(reg_status() & FLAG_OVERFLOW){ // Branch if overflow flag set
+                signed_value = result;
+                if(signed_value > 127){
+                    signed_value -= 256;
+                }
+                set_PC((uint16_t)((int)program_counter() + signed_value));
+                emu.total_CPU_cycles++;
+            }
+            break;
+
+        case 0x90: ; // BCC
+            result = read_increment_PC();
+            if(!(reg_status() & FLAG_CARRY)){ // Branch if carry flag cleared
+                signed_value = result;
+                if(signed_value > 127){
+                    signed_value -= 256;
+                }
+                set_PC((uint16_t)((int)program_counter() + signed_value));
+                emu.total_CPU_cycles++;
+            }
+            break;
+
+        case 0xB0: ; // BCS
+            result = read_increment_PC();
+            if(reg_status() & FLAG_CARRY){ // Branch if carry flag set
+                signed_value = result;
+                if(signed_value > 127){
+                    signed_value -= 256;
+                }
+                set_PC((uint16_t)((int)program_counter() + signed_value));
+                emu.total_CPU_cycles++;
+            }
             break;
 
         default:
@@ -107,8 +209,11 @@ void emu_run() {
     #if TRACELOGGER
     print_tracelog();
     #endif
-    print("\n");
-    emu_print_hexdump(0x0000, 8);
+    // print("\n");
+    // emu_print_hexdump(0x0000, 8);
+    // print("\n");
+    // emu_print_hexdump(0x0550, 2);
+    // print("\n");
 }
 
 uint8_t emu_read(uint16_t address){
