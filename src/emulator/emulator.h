@@ -22,6 +22,7 @@ struct registers {
     uint8_t Y;
     uint8_t flags;
 
+    uint8_t stack_pointer;
     uint16_t program_counter;
 };
 
@@ -45,6 +46,8 @@ void emu_reset();
 void emu_run();
 uint8_t emu_read(uint16_t address);
 void emu_write(uint16_t address, uint8_t value);
+void push_stack(uint8_t value);
+uint8_t pull_stack();
 void set_status_flag(uint8_t flag, bool condition);
 
 extern struct emulator emu;

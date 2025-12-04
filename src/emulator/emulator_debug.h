@@ -73,5 +73,6 @@ static inline uint8_t set_PC(uint16_t value) { emu.registers.program_counter = v
 static inline uint16_t program_counter(void) { return emu.registers.program_counter; }
 
 uint8_t read_increment_PC();
+uint8_t read_PC();
 
 #endif

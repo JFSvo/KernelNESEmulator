@@ -93,6 +93,8 @@ void print_tracelog() {
         print_hex8(cur_log_entry->registers.X);
         print(" Y:");
         print_hex8(cur_log_entry->registers.Y);
+        print(" S:");
+        print_hex8(cur_log_entry->registers.stack_pointer);
         print(" P:");
         uint8_t flags = cur_log_entry->registers.flags;
         print(flags & FLAG_NEGATIVE ? "N" : "n");

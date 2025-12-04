@@ -93,6 +93,10 @@ uint8_t read_increment_PC(){
     uint8_t result = emu_read(emu.registers.program_counter);
     emu.registers.program_counter++;
     return result;
+}
+
+uint8_t read_PC(){
+    return emu_read(emu.registers.program_counter);
 
 }
 

@@ -18,7 +18,7 @@ void emu_init()  {
     emu.ROM = kzalloc(0x8000);
     emu.header = kzalloc(0x10);
     emu.total_CPU_cycles = 8;
-    emu.filepath = "0:/test3.nes";
+    emu.filepath = "0:/test4.nes";
     CPU_halted = false;
     emu_reset();
 }
@@ -190,6 +190,32 @@ void emulate_CPU() {
             }
             break;
 
+        case 0x48: ; // PLA
+            push_stack(reg_A());
+            break;
+
+        case 0x68: ; // PHA
+            result = set_A_register(pull_stack());
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+
+        case 0x20: ; // JSR
+            PC_lowbyte = read_increment_PC();
+            PC_highbyte = read_PC();
+            
+            push_stack((uint8_t)(program_counter() >> 8));
+            push_stack((uint8_t)program_counter());
+            set_PC((PC_highbyte << 8) | PC_lowbyte);
+            break;
+        
+        case 0x60: ; // RTS
+            PC_lowbyte = pull_stack();
+            PC_highbyte = pull_stack();
+            set_PC((PC_highbyte << 8) | PC_lowbyte);
+            read_increment_PC();
+            break;
+
         default:
             // unknown opcode
             break;
@@ -209,11 +235,6 @@ void emu_run() {
     #if TRACELOGGER
     print_tracelog();
     #endif
-    // print("\n");
-    // emu_print_hexdump(0x0000, 8);
-    // print("\n");
-    // emu_print_hexdump(0x0550, 2);
-    // print("\n");
 }
 
 uint8_t emu_read(uint16_t address){
@@ -243,6 +264,33 @@ void emu_write(uint16_t address, uint8_t value){
     #endif 
 }
 
+
+void push_stack(uint8_t value){
+    emu_write(0x100+emu.registers.stack_pointer, value);
+    emu.registers.stack_pointer--;
+    
+    #if DEBUG
+    debug_tracker.reg_read_bitflag |= REG_STACK;
+    debug_tracker.reg_write_bitflag |= REG_STACK;
+    #endif 
+}
+
+uint8_t pull_stack(){
+    #if DEBUG 
+    bool old_value = debug_tracker.reads_mem; 
+    #endif
+    emu.registers.stack_pointer++;
+    uint8_t result = emu_read(0x100+emu.registers.stack_pointer);
+
+    #if DEBUG
+    debug_tracker.reg_read_bitflag |= REG_STACK;
+    debug_tracker.reg_write_bitflag |= REG_STACK;
+    debug_tracker.reads_mem = old_value;
+    #endif 
+
+    return result;
+}
+
 void emu_reset(){
     int fd = fopen(emu.filepath, "r");
     if(fd){
@@ -258,9 +306,11 @@ void emu_reset(){
     uint8_t PC_lowbyte = emu_read(0xFFFC);
     uint8_t PC_highbyte = emu_read(0xFFFD);
     emu.registers.program_counter = (PC_highbyte << 8) | PC_lowbyte;
+    emu.registers.stack_pointer = 0xFD;
     print("\n");
     emu_run();
 }
+
 
 void emu_enable_logger(bool is_enabled){
     logger_enabled = is_enabled;
