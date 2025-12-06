@@ -50,6 +50,11 @@ void push_stack(uint8_t value);
 uint8_t pull_stack();
 void set_status_flag(uint8_t flag, bool condition);
 
+void ASL_op(uint8_t input, uint16_t address);
+void LSR_op(uint8_t input, uint16_t address);
+void ROL_op(uint8_t input, uint16_t address);
+uint16_t get_absolute_addr();
+
 extern struct emulator emu;
 
 

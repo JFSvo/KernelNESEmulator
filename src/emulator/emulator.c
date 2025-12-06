@@ -50,36 +50,34 @@ void emulate_CPU() {
         case 0xA0: // LDY Immediate 
             result = set_Y_register(read_increment_PC());
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0xA2: // LDX Immediate 
             result = set_X_register(read_increment_PC());
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0xA9: // LDA Immediate 
             result = set_A_register(read_increment_PC());
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0xA5: ; // LDA Zero Page
             address = read_increment_PC();
             result = set_A_register(emu_read(address));
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0xAD: ; // LDA Absolute
-            PC_lowbyte = read_increment_PC();
-            PC_highbyte = read_increment_PC();
-            address = (PC_highbyte << 8) | PC_lowbyte;
+            address = get_absolute_addr();
 
             result = set_A_register(emu_read(address));
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0x85: ; // STA Zero Page
@@ -88,10 +86,7 @@ void emulate_CPU() {
             break;
 
         case 0x8D: ; // STA Absolute
-            PC_lowbyte = read_increment_PC();
-            PC_highbyte = read_increment_PC();
-            address = (PC_highbyte << 8) | PC_lowbyte;
-
+            address = get_absolute_addr();
             emu_write(address, reg_A());
             break;
 
@@ -101,10 +96,7 @@ void emulate_CPU() {
             break;
 
         case 0x8E: ; // STX Absolute
-            PC_lowbyte = read_increment_PC();
-            PC_highbyte = read_increment_PC();
-            address = (PC_highbyte << 8) | PC_lowbyte;
-
+            address = get_absolute_addr();
             emu_write(address, reg_X());
             break;
 
@@ -114,10 +106,7 @@ void emulate_CPU() {
             break;
 
         case 0x8C: ; // STY Absolute
-            PC_lowbyte = read_increment_PC();
-            PC_highbyte = read_increment_PC();
-            address = (PC_highbyte << 8) | PC_lowbyte;
-
+            address = get_absolute_addr();
             emu_write(address, reg_Y());
             break;
 
@@ -125,7 +114,7 @@ void emulate_CPU() {
             result = read_increment_PC();
             if(!(reg_status() & FLAG_ZERO)){ // Branch taken if zero flag cleared
                 signed_value = result;
-                if(signed_value > 127){
+                if(signed_value >= 0x80){
                     signed_value -= 256;
                 }
                 set_PC((uint16_t)((int)program_counter() + signed_value));
@@ -137,7 +126,7 @@ void emulate_CPU() {
             result = read_increment_PC();
             if(reg_status() & FLAG_ZERO){ // Branch taken if zero flag set
                 signed_value = result;
-                if(signed_value > 127){
+                if(signed_value >= 0x80){
                     signed_value -= 256;
                 }
                 set_PC((uint16_t)((int)program_counter() + signed_value));
@@ -149,7 +138,7 @@ void emulate_CPU() {
             result = read_increment_PC();
             if(!(reg_status() & FLAG_NEGATIVE)){ // Branch if negative flag cleared
                 signed_value = result;
-                if(signed_value > 127){
+                if(signed_value >= 0x80){
                     signed_value -= 256;
                 }
                 set_PC((uint16_t)((int)program_counter() + signed_value));
@@ -161,7 +150,7 @@ void emulate_CPU() {
             result = read_increment_PC();
             if(reg_status() & FLAG_NEGATIVE){ // Branch if negative flag set
                 signed_value = result;
-                if(signed_value > 127){
+                if(signed_value >= 0x80){
                     signed_value -= 256;
                 }
                 set_PC((uint16_t)((int)program_counter() + signed_value));
@@ -173,7 +162,7 @@ void emulate_CPU() {
             result = read_increment_PC();
             if(!(reg_status() & FLAG_OVERFLOW)){ // Branch if overflow flag cleared
                 signed_value = result;
-                if(signed_value > 127){
+                if(signed_value >= 0x80){
                     signed_value -= 256;
                 }
                 set_PC((uint16_t)((int)program_counter() + signed_value));
@@ -185,7 +174,7 @@ void emulate_CPU() {
             result = read_increment_PC();
             if(reg_status() & FLAG_OVERFLOW){ // Branch if overflow flag set
                 signed_value = result;
-                if(signed_value > 127){
+                if(signed_value >= 0x80){
                     signed_value -= 256;
                 }
                 set_PC((uint16_t)((int)program_counter() + signed_value));
@@ -197,7 +186,7 @@ void emulate_CPU() {
             result = read_increment_PC();
             if(!(reg_status() & FLAG_CARRY)){ // Branch if carry flag cleared
                 signed_value = result;
-                if(signed_value > 127){
+                if(signed_value >= 0x80){
                     signed_value -= 256;
                 }
                 set_PC((uint16_t)((int)program_counter() + signed_value));
@@ -209,7 +198,7 @@ void emulate_CPU() {
             result = read_increment_PC();
             if(reg_status() & FLAG_CARRY){ // Branch if carry flag set
                 signed_value = result;
-                if(signed_value > 127){
+                if(signed_value >= 0x80){
                     signed_value -= 256;
                 }
                 set_PC((uint16_t)((int)program_counter() + signed_value));
@@ -224,7 +213,7 @@ void emulate_CPU() {
         case 0x68: ; // PHA
             result = set_A_register(pull_stack());
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0x20: ; // JSR
@@ -253,49 +242,49 @@ void emulate_CPU() {
         case 0xE8: ; // INX
             result = set_X_register(reg_X() + 1);
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0xCA: ; // DEX
             result = set_X_register(reg_X() - 1);
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0xC8: ; // INY
             result = set_Y_register(reg_Y() + 1);
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0x88: ; // DEY
             result = set_X_register(reg_X() - 1);
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
     
         case 0xAA: ; // TAX
             result = set_X_register(reg_A());
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0xA8: ; // TAY
             result = set_Y_register(reg_A());
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0x8A: ; // TXA
             result = set_A_register(reg_X());
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0x98: ; // TYA
             result = set_A_register(reg_Y());
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0x9A: ; // TXS
@@ -305,7 +294,7 @@ void emulate_CPU() {
         case 0xBA: ; // TSX
             result = set_X_register(stack_pointer());
             set_status_flag(FLAG_ZERO, result == 0);
-            set_status_flag(FLAG_NEGATIVE, result > 127);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
         case 0x38: ; // SEC
@@ -357,6 +346,81 @@ void emulate_CPU() {
             set_status_register(result);
             break;
 
+        case 0x0A: ; // ASL A
+            set_status_flag(FLAG_CARRY, (reg_A() & 0x80));
+            result = set_A_register(reg_A() << 1);
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+            break;
+
+        case 0x06: ; // ASL Zero Page
+            address = get_absolute_addr();
+            ASL_op(address, emu_read(address));
+            break;
+
+        case 0x0E: ; // ASL Absolute
+            address = get_absolute_addr();
+            ASL_op(address, emu_read(address));
+            break;
+
+        case 0x4A: ; // LSR A
+            if(reg_A() & 0x01){
+                set_status_flag(FLAG_CARRY, true);
+            }
+            result = set_A_register(reg_A() >> 1);
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+            break;
+
+        case 0x46: ; // LSR Zero Page
+            address = get_absolute_addr();
+            LSR_op(address, emu_read(address));
+            break;
+
+        case 0x4E: ; // LSR Absolute
+            address = get_absolute_addr();
+            LSR_op(address, emu_read(address));
+            break;
+
+        case 0x2A: ; // ROL A
+            bool new_carry_bit = (reg_A() & 0x80);
+            result = set_A_register(reg_A() << 1);
+            if(reg_status() & FLAG_CARRY){
+                result = bit_OR_A(0x01);
+            }
+
+            set_status_flag(FLAG_CARRY, new_carry_bit);
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+            break;
+
+        case 0x2E: ; // ROL Zero Page
+            address = read_increment_PC();
+            ROL_op(address, emu_read(address));
+            break;
+
+        case 0x26: ; // ROL Absolute
+            address = get_absolute_addr();
+            ROL_op(address, emu_read(address));
+            break;
+
+        case 0x66: ; // ROR Zero Page
+            address = read_increment_PC();
+            ROL_op(address, emu_read(address));
+            break;
+
+        case 0x6E: ; // ROR Absolute
+            address = get_absolute_addr();
+            ROL_op(address, emu_read(address));
+            break;
+
+        case 0x09: ; // ORA Immediate
+            result = bit_OR_A(read_increment_PC());
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+            break;
+
+            
         default:
             // unknown opcode
             break;
@@ -457,3 +521,49 @@ void emu_enable_logger(bool is_enabled){
     logger_enabled = is_enabled;
 }
 
+// Get absolute address from byte in memory
+uint16_t get_absolute_addr(){
+    uint8_t PC_lowbyte = read_increment_PC();
+    uint8_t PC_highbyte = read_increment_PC();
+    return (PC_highbyte << 8) | PC_lowbyte;
+}
+
+void ASL_op(uint8_t input, uint16_t address){
+    set_status_flag(FLAG_CARRY, (input & 0x80));
+    input <<= 1;
+    emu_write(address, input);
+    set_status_flag(FLAG_ZERO, input == 0);
+    set_status_flag(FLAG_NEGATIVE, input >= 0x80);
+}
+
+void LSR_op(uint8_t input, uint16_t address){
+    set_status_flag(FLAG_CARRY, (input & 0x01)); 
+    input >>= 1;
+    emu_write(address, input);
+    set_status_flag(FLAG_ZERO, input == 0);
+    set_status_flag(FLAG_NEGATIVE, input >= 0x80);
+}
+
+void ROL_op(uint8_t input, uint16_t address){
+    bool new_carry_bit = (input & 0x80);
+    input <<= 1;
+    if(reg_status() & FLAG_CARRY){
+        input |= 0x01;
+    }
+    emu_write(address, input);
+    set_status_flag(FLAG_CARRY, new_carry_bit);
+    set_status_flag(FLAG_ZERO, input == 0);
+    set_status_flag(FLAG_NEGATIVE, input >= 0x80);
+}
+
+void ROR_op(uint8_t input, uint16_t address){
+    bool new_carry_bit = (input & 0x01);
+    input >>= 1;
+    if(reg_status() & FLAG_CARRY){
+        input |= 0x80;
+    }
+    emu_write(address, input);
+    set_status_flag(FLAG_CARRY, new_carry_bit);
+    set_status_flag(FLAG_ZERO, input == 0);
+    set_status_flag(FLAG_NEGATIVE, input >= 0x80);
+}
