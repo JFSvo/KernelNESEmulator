@@ -36,6 +36,7 @@ void emulate_CPU() {
     emu.registers.program_counter++;
 
     uint8_t result;
+    uint8_t temp;
     uint16_t address;
     uint8_t PC_lowbyte;
     uint8_t PC_highbyte;
@@ -92,6 +93,32 @@ void emulate_CPU() {
             address = (PC_highbyte << 8) | PC_lowbyte;
 
             emu_write(address, reg_A());
+            break;
+
+        case 0x86: ; // STX Zero Page
+            address = read_increment_PC();
+            emu_write(address, reg_X());
+            break;
+
+        case 0x8E: ; // STX Absolute
+            PC_lowbyte = read_increment_PC();
+            PC_highbyte = read_increment_PC();
+            address = (PC_highbyte << 8) | PC_lowbyte;
+
+            emu_write(address, reg_X());
+            break;
+
+        case 0x84: ; // STY Zero Page
+            address = read_increment_PC();
+            emu_write(address, reg_Y());
+            break;
+
+        case 0x8C: ; // STY Absolute
+            PC_lowbyte = read_increment_PC();
+            PC_highbyte = read_increment_PC();
+            address = (PC_highbyte << 8) | PC_lowbyte;
+
+            emu_write(address, reg_Y());
             break;
 
         case 0xD0: ; // BNE
@@ -265,6 +292,12 @@ void emulate_CPU() {
             set_status_flag(FLAG_NEGATIVE, result > 127);
             break;
 
+        case 0x98: ; // TYA
+            result = set_A_register(reg_Y());
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+
         case 0x9A: ; // TXS
             result = set_SP(reg_X());
             break;
@@ -273,6 +306,55 @@ void emulate_CPU() {
             result = set_X_register(stack_pointer());
             set_status_flag(FLAG_ZERO, result == 0);
             set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+
+        case 0x38: ; // SEC
+            set_status_flag(FLAG_CARRY, true);
+            break;
+
+        case 0x18: ; // CEC
+            set_status_flag(FLAG_CARRY, false);
+            break;
+
+        case 0xB8: ; // CLV 
+            set_status_flag(FLAG_OVERFLOW, false);
+            break;
+
+        case 0x78: ; // SEI
+            set_status_flag(FLAG_INTERRUPT_DISABLE, true);
+            break;
+
+        case 0x58: ; // CLI
+            set_status_flag(FLAG_INTERRUPT_DISABLE, false);
+            break;
+                
+        case 0xF8: ; // SED
+            set_status_flag(FLAG_DECIMAL, true);
+            break;
+        
+        case 0x08: ; // PHP
+            temp = 0;
+            temp |= (reg_status() & FLAG_CARRY);
+            temp |= (reg_status() & FLAG_ZERO);
+            temp |= (reg_status() & FLAG_INTERRUPT_DISABLE);
+            temp |= (reg_status() & FLAG_DECIMAL);
+            temp |= 0x30; // Set bits 4 and 5
+            temp |= (reg_status() & FLAG_OVERFLOW);
+            temp |= (reg_status() & FLAG_NEGATIVE);
+            push_stack(temp);
+            break;
+
+        case 0x28: ; // PLP
+            result = 0;
+            temp = pull_stack();
+            result |= (temp & FLAG_CARRY);
+            result |= (temp & FLAG_ZERO);
+            result |= (temp & FLAG_INTERRUPT_DISABLE);
+            result |= (temp & FLAG_DECIMAL);
+            result |= (temp & 0x30); // Set bits 4 and 5
+            result |= (temp & FLAG_OVERFLOW);
+            result |= (temp & FLAG_NEGATIVE);
+            set_status_register(result);
             break;
 
         default:
