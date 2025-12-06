@@ -56,6 +56,16 @@ static inline uint8_t reg_status(void) {
     return emu.registers.flags; 
 }
 
+static inline uint8_t set_SP(uint8_t value) { 
+    debug_tracker.reg_write_bitflag |= REG_STACK;
+    emu.registers.stack_pointer = value;
+    return value;
+}
+static inline uint8_t stack_pointer(void) {
+    debug_tracker.reg_read_bitflag |= REG_STACK;
+    return emu.registers.stack_pointer; 
+}
+
 #else
 static inline uint8_t set_A_register(uint8_t value) { emu.registers.A = value; return value;}
 static inline uint8_t reg_A(void) { return emu.registers.A; }
@@ -65,6 +75,9 @@ static inline uint8_t reg_X(void) { return emu.registers.X; }
 
 static inline uint8_t set_Y_register(uint8_t value) { emu.registers.Y = value; return value;}
 static inline uint8_t reg_Y(void) { return emu.registers.Y; }
+
+static inline uint8_t set_SP(uint8_t value) { emu.registers.stack_pointer = value; return value;}
+static inline uint8_t stack_pointer(void) { return emu.registers.stack_pointer; }
 
 static inline uint8_t reg_status(void) { return emu.registers.flags;}
 #endif

@@ -18,7 +18,7 @@ void emu_init()  {
     emu.ROM = kzalloc(0x8000);
     emu.header = kzalloc(0x10);
     emu.total_CPU_cycles = 8;
-    emu.filepath = "0:/test4.nes";
+    emu.filepath = "0:/test5.nes";
     CPU_halted = false;
     emu_reset();
 }
@@ -214,6 +214,65 @@ void emulate_CPU() {
             PC_highbyte = pull_stack();
             set_PC((PC_highbyte << 8) | PC_lowbyte);
             read_increment_PC();
+            break;
+        
+        case 0x4C: ; // JMP
+            PC_lowbyte = read_increment_PC();
+            PC_highbyte = read_increment_PC();
+
+            set_PC((PC_highbyte << 8) | PC_lowbyte);
+            break;
+
+        case 0xE8: ; // INX
+            result = set_X_register(reg_X() + 1);
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+
+        case 0xCA: ; // DEX
+            result = set_X_register(reg_X() - 1);
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+
+        case 0xC8: ; // INY
+            result = set_Y_register(reg_Y() + 1);
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+
+        case 0x88: ; // DEY
+            result = set_X_register(reg_X() - 1);
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+    
+        case 0xAA: ; // TAX
+            result = set_X_register(reg_A());
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+
+        case 0xA8: ; // TAY
+            result = set_Y_register(reg_A());
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+
+        case 0x8A: ; // TXA
+            result = set_A_register(reg_X());
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
+            break;
+
+        case 0x9A: ; // TXS
+            result = set_SP(reg_X());
+            break;
+
+        case 0xBA: ; // TSX
+            result = set_X_register(stack_pointer());
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result > 127);
             break;
 
         default:
