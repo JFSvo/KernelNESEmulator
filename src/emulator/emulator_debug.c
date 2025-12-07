@@ -89,24 +89,3 @@ void reset_tracker(){
     debug_tracker.writes_mem = false;
 }
 
-uint8_t read_increment_PC(){
-    uint8_t result = emu_read(emu.registers.program_counter);
-    emu.registers.program_counter++;
-    return result;
-}
-
-uint8_t read_PC(){
-    return emu_read(emu.registers.program_counter);
-
-}
-
-void set_status_flag(uint8_t flag, bool condition){
-    if(condition){
-        emu.registers.flags |= flag;
-    } else {
-        emu.registers.flags &= ~flag;
-    }
-    #if DEBUG
-    debug_tracker.reg_write_bitflag |= REG_STATUS; 
-    #endif 
-}

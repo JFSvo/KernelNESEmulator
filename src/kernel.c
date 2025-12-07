@@ -68,7 +68,13 @@ void print(const char* str)  {
     for (int i = 0; i < len; i++)  {  
         terminal_writechar(str[i], 15);  
     }  
-}  
+}
+
+void print_spaces(int num_spaces){
+    for(int i = 0; i <  num_spaces; i++){
+        print(" ");
+    }
+}
 
 void print_hexdump(const uint8_t* data, int size)  {  
     for (int i = 0; i < size+1; i++) {

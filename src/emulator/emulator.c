@@ -24,16 +24,11 @@ void emu_init()  {
 }
 
 void emulate_CPU() {
-    #if DEBUG
-    uint16_t initial_PC = emu.registers.program_counter;
-    #endif
-    uint8_t opcode = emu_read(emu.registers.program_counter);
-    emu.current_opcode = opcode;
-    
     reset_tracker();
-    add_tracelog_entry(&emu);
+
+    struct tracelog_entry* tracelog_entry = add_tracelog_entry(&emu);
     
-    emu.registers.program_counter++;
+    uint8_t opcode = read_increment_PC();
 
     uint8_t result;
     uint8_t temp;
@@ -354,7 +349,7 @@ void emulate_CPU() {
             break;
 
         case 0x06: ; // ASL Zero Page
-            address = get_absolute_addr();
+            address = read_increment_PC();
             ASL_op(address, emu_read(address));
             break;
 
@@ -373,7 +368,7 @@ void emulate_CPU() {
             break;
 
         case 0x46: ; // LSR Zero Page
-            address = get_absolute_addr();
+            address = read_increment_PC();
             LSR_op(address, emu_read(address));
             break;
 
@@ -394,12 +389,12 @@ void emulate_CPU() {
             set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
 
-        case 0x2E: ; // ROL Zero Page
+        case 0x26: ; // ROL Zero Page
             address = read_increment_PC();
             ROL_op(address, emu_read(address));
             break;
 
-        case 0x26: ; // ROL Absolute
+        case 0x2E: ; // ROL Absolute
             address = get_absolute_addr();
             ROL_op(address, emu_read(address));
             break;
@@ -419,14 +414,171 @@ void emulate_CPU() {
             set_status_flag(FLAG_ZERO, result == 0);
             set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
+        
+        case 0x05: ; // ORA Zero Page
+            address = read_increment_PC();
+            temp = bit_OR_A(emu_read(address));
+            emu_write(address, temp);
+            set_status_flag(FLAG_ZERO, temp == 0);
+            set_status_flag(FLAG_NEGATIVE, temp >= 0x80);
+            break;
+                
+        case 0x0D: ; // ORA Absolute
+            address = get_absolute_addr();
+            temp = bit_OR_A(emu_read(address));
+            emu_write(address, temp);
+            set_status_flag(FLAG_ZERO, temp == 0);
+            set_status_flag(FLAG_NEGATIVE, temp >= 0x80);
+            break;
 
-            
+        case 0x49: ; // EOR Immediate
+            result = bit_XOR_A(read_increment_PC());
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+            break;
+        
+        case 0x45: ; // EOR Zero Page
+            address = read_increment_PC();
+            temp = bit_XOR_A(emu_read(address));
+            emu_write(address, temp);
+            set_status_flag(FLAG_ZERO, temp == 0);
+            set_status_flag(FLAG_NEGATIVE, temp >= 0x80);
+            break;
+                
+        case 0x4D: ; // EOR Absolute
+            address = get_absolute_addr();
+            temp = bit_XOR_A(emu_read(address));
+            emu_write(address, temp);
+            set_status_flag(FLAG_ZERO, temp == 0);
+            set_status_flag(FLAG_NEGATIVE, temp >= 0x80);
+            break;
+
+        case 0x29: ; // AND Immediate
+            result = bit_AND_A(read_increment_PC());
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+            break;
+        
+        case 0x25: ; // AND Zero Page
+            address = read_increment_PC();
+            temp = bit_AND_A(emu_read(address));
+            emu_write(address, temp);
+            set_status_flag(FLAG_ZERO, temp == 0);
+            set_status_flag(FLAG_NEGATIVE, temp >= 0x80);
+            break;
+                
+        case 0x2D: ; // AND Absolute
+            address = get_absolute_addr();
+            temp = bit_AND_A(emu_read(address));
+            emu_write(address, temp);
+            set_status_flag(FLAG_ZERO, temp == 0);
+            set_status_flag(FLAG_NEGATIVE, temp >= 0x80);
+            break;
+
+        case 0xE6: ; // INC Zero Page
+            address = read_increment_PC();
+            INC_op(address, emu_read(address));
+            break;
+
+        case 0xEE: ; // INC Absolute
+            address = get_absolute_addr();
+            INC_op(address, emu_read(address));
+            break;
+        
+        case 0xC6: ; // DEC Zero Page
+            address = read_increment_PC();
+            DEC_op(address, emu_read(address));
+            break;
+
+        case 0xCE: ; // DEC Absolute
+            address = get_absolute_addr();
+            DEC_op(address, emu_read(address));
+            break;
+
+        case 0x69: ; // ADC Immediate
+            ADC_op(read_increment_PC());
+            break;
+        
+        case 0x65: ; // ADC Zero Page
+            address = read_increment_PC();
+            ADC_op(emu_read(address));
+            break;
+                
+        case 0x6D: ; // ADC Absolute
+            address = get_absolute_addr();
+            ADC_op(emu_read(address));
+            break;
+
+        case 0xE9: ; // SBC Immediate
+            SBC_op(read_increment_PC());
+            break;
+        
+        case 0xE5: ; // SBC Zero Page
+            address = read_increment_PC();
+            SBC_op(emu_read(address));
+            break;
+                
+        case 0xED: ; // SBC Absolute
+            address = get_absolute_addr();
+            SBC_op(emu_read(address));
+            break;
+
+        case 0xC9: ; // CMP
+            CMP_op(read_increment_PC(), reg_A());
+            break;
+
+        case 0xC5: ; // CMP Zero Page
+            address = read_increment_PC();
+            CMP_op(emu_read(address), reg_A());
+            break;
+                
+        case 0xCD: ; // CMP Absolute
+            address = get_absolute_addr();
+            CMP_op(emu_read(address), reg_A());
+            break;
+
+        case 0xE0: ; // CPX
+            CMP_op(read_increment_PC(), reg_X());
+            break;
+
+        case 0xE4: ; // CPX Zero Page
+            address = read_increment_PC();
+            CMP_op(emu_read(address), reg_X());
+            break;
+                
+        case 0xEC: ; // CPX Absolute
+            address = get_absolute_addr();
+            CMP_op(emu_read(address), reg_X());
+            break;
+
+        case 0xC0: ; // CPY
+            CMP_op(read_increment_PC(), reg_Y());
+            break;
+
+        case 0xC4: ; // CPY Zero Page
+            address = read_increment_PC();
+            CMP_op(emu_read(address), reg_Y());
+            break;
+                
+        case 0xCC: ; // CPY Absolute
+            address = get_absolute_addr();
+            CMP_op(emu_read(address), reg_Y());
+            break;
+
+        case 0xEA: ; // NOP
+            break;
+
         default:
+            print("UNKNOWN OPCODE!");
             // unknown opcode
             break;
     }
     #if DEBUG
-    compare_with_table(opcode, initial_PC);
+    compare_with_table(opcode, tracelog_entry->registers.program_counter);
+    #endif
+
+    #if TRACELOGGER
+    print_latest_tracelog_entry();
     #endif
 
     emu.total_CPU_cycles += opcode_table[opcode].cycles;
@@ -436,37 +588,47 @@ void emu_run() {
     while(!CPU_halted){
         emulate_CPU();
     }
-    
-    #if TRACELOGGER
-    print_tracelog();
-    #endif
 }
 
 uint8_t emu_read(uint16_t address){
-    #if DEBUG
-    if(address != emu.registers.program_counter){ debug_tracker.reads_mem = true; }
-    #endif 
+    uint8_t return_value = 0;
+    
 
     // optional: we can add RAM mirroring here
     if(address < 0x800){
-        return emu.RAM[address];
+        return_value = emu.RAM[address];
     }
     if(address >= 0x8000){
-        return emu.ROM[address-0x8000];
+        return_value = emu.ROM[address-0x8000];
     }
 
-    return 0;
+    if(address != emu.registers.program_counter){ 
+        #if DEBUG
+        debug_tracker.reads_mem = true;
+        #endif
+        #if TRACELOGGER
+        tail_log_set_read_value(return_value);
+        #endif
+    }
+
+    return return_value;
 }
 
 void emu_write(uint16_t address, uint8_t value){
     // optional: we can add RAM mirroring here
     if(address < 0x800){
         emu.RAM[address] = value;
+    } else {
+        return;
     }
 
     #if DEBUG
     debug_tracker.writes_mem = true; 
     #endif 
+
+    #if TRACELOGGER
+    tail_log_set_written_value(value);
+    #endif
 }
 
 
@@ -514,6 +676,31 @@ void emu_reset(){
     emu.registers.stack_pointer = 0xFD;
     print("\n");
     emu_run();
+}
+
+uint8_t read_increment_PC(){
+    uint8_t result = emu_read(emu.registers.program_counter);
+    emu.registers.program_counter++;
+    #if TRACELOGGER
+    tail_log_set_operand(result);
+    #endif
+    return result;
+}
+
+uint8_t read_PC(){
+    return emu_read(emu.registers.program_counter);
+
+}
+
+void set_status_flag(uint8_t flag, bool condition){
+    if(condition){
+        emu.registers.flags |= flag;
+    } else {
+        emu.registers.flags &= ~flag;
+    }
+    #if DEBUG
+    debug_tracker.reg_write_bitflag |= REG_STATUS; 
+    #endif 
 }
 
 
@@ -566,4 +753,52 @@ void ROR_op(uint8_t input, uint16_t address){
     set_status_flag(FLAG_CARRY, new_carry_bit);
     set_status_flag(FLAG_ZERO, input == 0);
     set_status_flag(FLAG_NEGATIVE, input >= 0x80);
+}
+
+// Add with carry
+void ADC_op(uint8_t input){
+    int sum = reg_A() + input;
+    if(reg_status() & FLAG_CARRY){
+        sum++;
+    }
+    // Set overflow flag if add takes us from 2 pos. values -> neg. value or two neg. values -> pos. value 
+    set_status_flag(FLAG_OVERFLOW, (~bit_XOR_A(input) & bit_XOR_A(sum) & 0x80) != 0);
+    set_status_flag(FLAG_CARRY, sum > 0xFF);
+    uint8_t result = set_A_register((uint8_t) sum);
+    set_status_flag(FLAG_ZERO, result == 0);
+    set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+}
+
+// Subtract with carry
+void SBC_op(uint8_t input){
+    int sum = reg_A() - input;
+    if((~reg_status() & ~FLAG_CARRY)){
+        sum--;
+    }
+    // Set overflow flag if add takes us from 2 pos. values -> neg. value or two neg. values -> pos. value 
+    set_status_flag(FLAG_OVERFLOW, (bit_XOR_A(input) & bit_XOR_A(sum) & 0x80) != 0);
+    set_status_flag(FLAG_CARRY, sum >= 0);
+    uint8_t result = set_A_register((uint8_t) sum);
+    set_status_flag(FLAG_ZERO, result == 0);
+    set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+}
+
+void INC_op(uint8_t input, uint16_t address){
+    input++;
+    emu_write(address, input);
+    set_status_flag(FLAG_ZERO, input == 0);
+    set_status_flag(FLAG_NEGATIVE, input >= 0x80);
+}
+
+void DEC_op(uint8_t input, uint16_t address){
+    input--;
+    emu_write(address, input);
+    set_status_flag(FLAG_ZERO, input == 0);
+    set_status_flag(FLAG_NEGATIVE, input >= 0x80);
+}
+
+void CMP_op(uint8_t input, uint8_t reg_value){
+    set_status_flag(FLAG_CARRY, input < reg_value);
+    set_status_flag(FLAG_ZERO, input == reg_value);
+    set_status_flag(FLAG_NEGATIVE, reg_value - input > 127);
 }

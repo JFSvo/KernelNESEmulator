@@ -52,9 +52,25 @@ out:
     return entry;
 }
 
+void tail_log_set_operand(uint8_t byte) {
+    if(log_tail->opcode == 0){
+        log_tail->opcode = byte;
+    } else {
+        int index = (log_tail->operands[0] == 0) ? 0 : 1;
+        log_tail->operands[index] = byte;
+    }
+}
+
+void tail_log_set_written_value(uint8_t byte) {
+    log_tail->written_value = byte;
+}
+
+void tail_log_set_read_value(uint8_t byte) {
+    log_tail->read_value = byte;
+}
+
 void init_log_entry(struct tracelog_entry* entry, struct emulator* emu) {
     entry->registers = emu->registers;
-    entry->opcode = emu->current_opcode;
     entry->total_CPU_cycles = emu->total_CPU_cycles;
 }
 
@@ -80,34 +96,94 @@ void remove_first_entry() {
 void print_tracelog() {
     struct tracelog_entry* cur_log_entry = log_head;
     while(cur_log_entry != NULL) {
-        print_hex16(cur_log_entry->registers.program_counter);
-        const struct opcode_entry* opcode_entry = &opcode_table[cur_log_entry->opcode];
-        print(" ");
-        print(opcode_entry->mnemonic);
-        print("  ");
-        print_hex8(cur_log_entry->opcode);
-        print("  ");
-        print("A:");
-        print_hex8(cur_log_entry->registers.A);
-        print(" X:");
-        print_hex8(cur_log_entry->registers.X);
-        print(" Y:");
-        print_hex8(cur_log_entry->registers.Y);
-        print(" S:");
-        print_hex8(cur_log_entry->registers.stack_pointer);
-        print(" P:");
-        uint8_t flags = cur_log_entry->registers.flags;
-        print(flags & FLAG_NEGATIVE ? "N" : "n");
-        print(flags & FLAG_OVERFLOW ? "V" : "v");
-        print("--");
-        print(flags & FLAG_DECIMAL ? "D" : "d");
-        print(flags & FLAG_INTERRUPT_DISABLE ? "I" : "i");
-        print(flags & FLAG_ZERO ? "Z" : "z");
-        print(flags & FLAG_CARRY ? "C" : "c");
-        print(" Cycle:");
-        print_decimal(cur_log_entry->total_CPU_cycles);
-        print("\n");
+        //print_tracelog_entry();
 
         cur_log_entry = cur_log_entry->next;
     }
+}
+
+void print_latest_tracelog_entry() {
+    if(current_length >= 20 && current_length < 40){
+        print_tracelog_entry(log_tail);
+    }
+}
+
+void print_tracelog_entry(struct tracelog_entry* cur_log_entry) {
+    print_hex16(cur_log_entry->registers.program_counter);
+    const struct opcode_entry* opcode_entry = &opcode_table[cur_log_entry->opcode];
+    print(" ");
+    print_hex8(cur_log_entry->opcode);
+    print("  ");
+    print(opcode_entry->mnemonic);
+    print(" ");
+    print_tracelog_operands(cur_log_entry, opcode_entry);
+    print("A:");
+    print_hex8(cur_log_entry->registers.A);
+    print(" X:");
+    print_hex8(cur_log_entry->registers.X);
+    print(" Y:");
+    print_hex8(cur_log_entry->registers.Y);
+    print(" S:");
+    print_hex8(cur_log_entry->registers.stack_pointer);
+    print(" P:");
+    uint8_t flags = cur_log_entry->registers.flags;
+    print(flags & FLAG_NEGATIVE ? "N" : "n");
+    print(flags & FLAG_OVERFLOW ? "V" : "v");
+    print("--");
+    print(flags & FLAG_DECIMAL ? "D" : "d");
+    print(flags & FLAG_INTERRUPT_DISABLE ? "I" : "i");
+    print(flags & FLAG_ZERO ? "Z" : "z");
+    print(flags & FLAG_CARRY ? "C" : "c");
+    print(" Cycle:");
+    print_decimal(cur_log_entry->total_CPU_cycles);
+    print("\n");
+}
+
+void print_tracelog_operands(struct tracelog_entry* cur_log_entry, const struct opcode_entry* opcode_entry){
+    
+    uint16_t address;
+
+    switch(opcode_entry->addr_mode){
+
+        case ADDR_ZERO_PAGE: 
+            address = cur_log_entry->operands[0];
+            print_tracelog_address(cur_log_entry, address);
+            break;
+
+        case ADDR_ABSOLUTE: 
+            address = (cur_log_entry->operands[1] << 8) | cur_log_entry->operands[0];
+            print_tracelog_address(cur_log_entry, address);
+            break;   
+
+        case ADDR_IMMEDIATE: 
+            print("#$");
+            print_hex8(cur_log_entry->operands[0]);
+            print_spaces(9);
+            break;
+
+        default:
+            print_spaces(13);
+            break;
+    }
+}
+
+void print_tracelog_address(struct tracelog_entry* cur_log_entry, uint16_t address){
+    uint8_t print_value;
+    int extra_spaces = 0;
+    print("$");
+    if(address <= 0xFF){
+        print_hex8(address);
+        extra_spaces = 4;
+    } else {
+        print_hex16(address);
+        extra_spaces = 2;
+    }
+
+    print_value = cur_log_entry->written_value ? cur_log_entry->written_value : cur_log_entry->read_value;
+    if(print_value){
+        print(" = $");
+        print_hex8(print_value);
+    }
+    print_spaces(extra_spaces);
+
 }

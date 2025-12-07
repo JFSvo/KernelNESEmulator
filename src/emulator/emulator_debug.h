@@ -34,7 +34,14 @@ static inline uint8_t bit_OR_A(uint8_t value) {
     emu.registers.A |= value; 
     return emu.registers.A;
 }
+static inline uint8_t bit_XOR_A(uint8_t value) { 
+    debug_tracker.reg_read_bitflag |= REG_A; 
+    debug_tracker.reg_write_bitflag |= REG_A;
+    emu.registers.A ^= value; 
+    return emu.registers.A;
+}
 static inline uint8_t bit_AND_A(uint8_t value) {
+    debug_tracker.reg_read_bitflag |= REG_A; 
     debug_tracker.reg_write_bitflag |= REG_A; 
     emu.registers.A &= value; 
     return emu.registers.A; 
@@ -84,6 +91,7 @@ static inline uint8_t stack_pointer(void) {
 #else
 static inline uint8_t set_A_register(uint8_t value) { emu.registers.A = value; return value;}
 static inline uint8_t bit_OR_A(uint8_t value) { emu.registers.A |= value; return emu.registers.A; }
+static inline uint8_t bit_XOR_A(uint8_t value) { emu.registers.A ^= value; return emu.registers.A; }
 static inline uint8_t bit_AND_A(uint8_t value) { emu.registers.A &= value; return emu.registers.A; }
 static inline uint8_t reg_A(void) { return emu.registers.A; }
 
@@ -105,8 +113,5 @@ static inline uint8_t reg_status(void) { return emu.registers.flags;}
 
 static inline uint8_t set_PC(uint16_t value) { emu.registers.program_counter = value; return value;}
 static inline uint16_t program_counter(void) { return emu.registers.program_counter; }
-
-uint8_t read_increment_PC();
-uint8_t read_PC();
 
 #endif
