@@ -1,13 +1,15 @@
 section .asm  
 
 extern int21h_handler  
-extern no_interrupt_handler  
+extern no_interrupt_handler
+extern pit_handler  
 
 global int21h  
 global idt_load  
 global no_interrupt 
 global enable_interrupts
 global disable_interrupts
+global pit_irq 
 
 enable_interrupts:
     sti
@@ -40,4 +42,12 @@ no_interrupt:
     call no_interrupt_handler  
     popad  
     sti  
+    iret
+
+pit_irq:
+    cli
+    pushad
+    call pit_handler      ; C function in pit.c
+    popad
+    sti
     iret

@@ -11,6 +11,7 @@ struct idtr_desc idtr_descriptor;
 extern void idt_load(struct idtr_desc* ptr);  
 extern void int21h();
 extern void no_interrupt();
+extern void pit_irq();
 
 
 void int21h_handler(){
@@ -62,6 +63,7 @@ void idt_init()  {
     // will print Divide by zero error.  
     idt_set(0, idt_zero);  
     idt_set(0x21, int21h);
+    idt_set(0x20, pit_irq);
     
     // Load the interrupt descriptor table  
     idt_load(&idtr_descriptor);  
