@@ -13,6 +13,9 @@ struct tracelog_entry* log_head = NULL;
 struct tracelog_entry* log_tail = NULL;
 
 int current_length = 0;
+int current_operand = 0;
+bool read_value_set = false;
+bool write_value_set = false;
 
 struct tracelog_entry* add_tracelog_entry(struct emulator* emu){
     int res = 0;
@@ -56,22 +59,27 @@ void tail_log_set_operand(uint8_t byte) {
     if(log_tail->opcode == 0){
         log_tail->opcode = byte;
     } else {
-        int index = (log_tail->operands[0] == 0) ? 0 : 1;
-        log_tail->operands[index] = byte;
+        log_tail->operands[current_operand] = byte;
+        current_operand++;
     }
 }
 
 void tail_log_set_written_value(uint8_t byte) {
     log_tail->written_value = byte;
+    write_value_set = true;
 }
 
 void tail_log_set_read_value(uint8_t byte) {
     log_tail->read_value = byte;
+    read_value_set = true;
 }
 
 void init_log_entry(struct tracelog_entry* entry, struct emulator* emu) {
     entry->registers = emu->registers;
     entry->total_CPU_cycles = emu->total_CPU_cycles;
+    current_operand = 0;
+    read_value_set = false;
+    write_value_set = false;
 }
 
 void remove_first_entry() {
@@ -103,7 +111,7 @@ void print_tracelog() {
 }
 
 void print_latest_tracelog_entry() {
-    if(current_length >= 20 && current_length < 40){
+    if(current_length >= 80 && current_length < 90){
         print_tracelog_entry(log_tail);
     }
 }
@@ -151,7 +159,7 @@ void print_tracelog_operands(struct tracelog_entry* cur_log_entry, const struct 
             break;
 
         case ADDR_ABSOLUTE: 
-            address = (cur_log_entry->operands[1] << 8) | cur_log_entry->operands[0];
+            address = ((cur_log_entry->operands[1] << 8) | cur_log_entry->operands[0]);
             print_tracelog_address(cur_log_entry, address);
             break;   
 
@@ -179,10 +187,12 @@ void print_tracelog_address(struct tracelog_entry* cur_log_entry, uint16_t addre
         extra_spaces = 2;
     }
 
-    print_value = cur_log_entry->written_value ? cur_log_entry->written_value : cur_log_entry->read_value;
-    if(print_value){
+    print_value = write_value_set ? cur_log_entry->written_value : cur_log_entry->read_value;
+    if(read_value_set || write_value_set){
         print(" = $");
         print_hex8(print_value);
+    } else {
+        print_spaces(6);
     }
     print_spaces(extra_spaces);
 

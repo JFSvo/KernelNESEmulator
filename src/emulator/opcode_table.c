@@ -6,9 +6,9 @@
 // data derived from https://www.nesdev.org/wiki/Visual6502wiki/6502_all_256_Opcodes
 
 const struct opcode_entry opcode_table[NUM_OPCODES] = { 
-  {0x00, "BRK", MODE_UNKNOWN,      1, 7, 0x00, 0x00, false, false  },
+  {0x00, "BRK", MODE_UNKNOWN,      1, 7, 0x03, 0x02, true,  true  },
   {0x01, "ORA", ADDR_INDIRECT_X,   2, 6, 0x10, 0x01, true,  false  },
-  {0x02, "KIL", MODE_UNKNOWN,      1, 2, 0x00, 0x00, false, false  },
+  {0x02, "STP", MODE_UNKNOWN,      1, 2, 0x00, 0x00, false, false  },
   {0x03, "SLO", ADDR_INDIRECT_X,   2, 8, 0x10, 0x01, true,  true   },
   {0x04, "NOP", ADDR_ZERO_PAGE,    2, 3, 0x00, 0x00, true,  false  },
   {0x05, "ORA", ADDR_ZERO_PAGE,    2, 3, 0x10, 0x11, true,  false  },

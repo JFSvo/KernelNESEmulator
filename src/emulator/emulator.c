@@ -25,9 +25,12 @@ void emu_init()  {
 
 void emulate_CPU() {
     reset_tracker();
-
-    struct tracelog_entry* tracelog_entry = add_tracelog_entry(&emu);
     
+    #if DEBUG
+    uint16_t initial_PC = emu.registers.program_counter;
+    #endif
+
+    add_tracelog_entry(&emu);
     uint8_t opcode = read_increment_PC();
 
     uint8_t result;
@@ -317,28 +320,14 @@ void emulate_CPU() {
             break;
         
         case 0x08: ; // PHP
-            temp = 0;
-            temp |= (reg_status() & FLAG_CARRY);
-            temp |= (reg_status() & FLAG_ZERO);
-            temp |= (reg_status() & FLAG_INTERRUPT_DISABLE);
-            temp |= (reg_status() & FLAG_DECIMAL);
+            temp = reg_status();
             temp |= 0x30; // Set bits 4 and 5
-            temp |= (reg_status() & FLAG_OVERFLOW);
-            temp |= (reg_status() & FLAG_NEGATIVE);
             push_stack(temp);
             break;
 
         case 0x28: ; // PLP
             result = 0;
-            temp = pull_stack();
-            result |= (temp & FLAG_CARRY);
-            result |= (temp & FLAG_ZERO);
-            result |= (temp & FLAG_INTERRUPT_DISABLE);
-            result |= (temp & FLAG_DECIMAL);
-            result |= (temp & 0x30); // Set bits 4 and 5
-            result |= (temp & FLAG_OVERFLOW);
-            result |= (temp & FLAG_NEGATIVE);
-            set_status_register(result);
+            set_status_register(pull_stack());
             break;
 
         case 0x0A: ; // ASL A
@@ -565,16 +554,42 @@ void emulate_CPU() {
             CMP_op(emu_read(address), reg_Y());
             break;
 
+        case 0x24: ; // BIT Zero Page
+            address = read_increment_PC();
+            BIT_op(emu_read(address));
+            break;
+                
+        case 0x2C: ; // BIT Absolute
+            address = get_absolute_addr();
+            BIT_op(emu_read(address));
+            break;
+
+        case 0x00: ; // BRK
+            increment_PC();
+            push_stack((uint8_t)(program_counter() >> 8));
+            push_stack((uint8_t) program_counter());
+            push_stack(reg_status());
+            PC_lowbyte = emu_read(0xFFFE);
+            PC_highbyte = emu_read(0xFFFF);
+            set_PC((PC_highbyte << 8) | PC_lowbyte);
+            break;
+        
+        case 0x40: ; // RTI
+            set_status_register(pull_stack());
+            PC_lowbyte = pull_stack();
+            PC_highbyte = pull_stack();
+            set_PC((PC_highbyte << 8) | PC_lowbyte);
+            break;
+
         case 0xEA: ; // NOP
             break;
 
         default:
-            print("UNKNOWN OPCODE!");
             // unknown opcode
             break;
     }
     #if DEBUG
-    compare_with_table(opcode, tracelog_entry->registers.program_counter);
+    compare_with_table(opcode, initial_PC);
     #endif
 
     #if TRACELOGGER
@@ -588,6 +603,7 @@ void emu_run() {
     while(!CPU_halted){
         emulate_CPU();
     }
+    emu_print_hexdump(0x00, 0x0D);
 }
 
 uint8_t emu_read(uint16_t address){
@@ -688,8 +704,15 @@ uint8_t read_increment_PC(){
 }
 
 uint8_t read_PC(){
-    return emu_read(emu.registers.program_counter);
+    uint8_t result = emu_read(emu.registers.program_counter);
+    #if TRACELOGGER
+    tail_log_set_operand(result);
+    #endif
+    return result;
+}
 
+void increment_PC(){
+    emu.registers.program_counter++;
 }
 
 void set_status_flag(uint8_t flag, bool condition){
@@ -772,7 +795,7 @@ void ADC_op(uint8_t input){
 // Subtract with carry
 void SBC_op(uint8_t input){
     int sum = reg_A() - input;
-    if((~reg_status() & ~FLAG_CARRY)){
+    if((~reg_status() & FLAG_CARRY)){
         sum--;
     }
     // Set overflow flag if add takes us from 2 pos. values -> neg. value or two neg. values -> pos. value 
@@ -798,7 +821,13 @@ void DEC_op(uint8_t input, uint16_t address){
 }
 
 void CMP_op(uint8_t input, uint8_t reg_value){
-    set_status_flag(FLAG_CARRY, input < reg_value);
-    set_status_flag(FLAG_ZERO, input == reg_value);
+    set_status_flag(FLAG_CARRY, reg_value >= input);
+    set_status_flag(FLAG_ZERO, reg_value == input);
     set_status_flag(FLAG_NEGATIVE, reg_value - input > 127);
+}
+
+void BIT_op(uint8_t input){
+    set_status_flag(FLAG_ZERO, (reg_A() & input) == 0);
+    set_status_flag(FLAG_NEGATIVE, (input & 0x80) != 0);
+    set_status_flag(FLAG_OVERFLOW, (input & 0x40) != 0);
 }

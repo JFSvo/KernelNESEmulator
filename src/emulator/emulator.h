@@ -50,6 +50,7 @@ uint8_t pull_stack();
 void set_status_flag(uint8_t flag, bool condition);
 uint8_t read_increment_PC();
 uint8_t read_PC();
+void increment_PC();
 
 void ASL_op(uint8_t input, uint16_t address);
 void LSR_op(uint8_t input, uint16_t address);
@@ -59,6 +60,7 @@ void SBC_op(uint8_t input);
 void INC_op(uint8_t input, uint16_t address);
 void DEC_op(uint8_t input, uint16_t address);
 void CMP_op(uint8_t input, uint8_t reg_value);
+void BIT_op(uint8_t input);
 uint16_t get_absolute_addr();
 
 extern struct emulator emu;
