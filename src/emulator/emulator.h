@@ -35,6 +35,7 @@ struct emulator {
     uint8_t* ROM;
     uint8_t* header;
 
+    uint8_t cur_instruction;
     int total_CPU_cycles;
 }; 
 
@@ -55,6 +56,7 @@ void increment_PC();
 void ASL_op(uint8_t input, uint16_t address);
 void LSR_op(uint8_t input, uint16_t address);
 void ROL_op(uint8_t input, uint16_t address);
+void ROR_op(uint8_t input, uint16_t address);
 void ADC_op(uint8_t input);
 void SBC_op(uint8_t input);
 void INC_op(uint8_t input, uint16_t address);

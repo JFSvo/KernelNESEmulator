@@ -111,7 +111,7 @@ void print_tracelog() {
 }
 
 void print_latest_tracelog_entry() {
-    if(current_length >= 80 && current_length < 90){
+    if(current_length >= 20 && current_length < 40){
         print_tracelog_entry(log_tail);
     }
 }

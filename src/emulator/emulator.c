@@ -32,6 +32,7 @@ void emulate_CPU() {
 
     add_tracelog_entry(&emu);
     uint8_t opcode = read_increment_PC();
+    emu.cur_instruction = opcode;
 
     uint8_t result;
     uint8_t temp;
@@ -339,12 +340,12 @@ void emulate_CPU() {
 
         case 0x06: ; // ASL Zero Page
             address = read_increment_PC();
-            ASL_op(address, emu_read(address));
+            ASL_op(emu_read(address), address);
             break;
 
         case 0x0E: ; // ASL Absolute
             address = get_absolute_addr();
-            ASL_op(address, emu_read(address));
+            ASL_op(emu_read(address), address);
             break;
 
         case 0x4A: ; // LSR A
@@ -358,12 +359,12 @@ void emulate_CPU() {
 
         case 0x46: ; // LSR Zero Page
             address = read_increment_PC();
-            LSR_op(address, emu_read(address));
+            LSR_op(emu_read(address), address);
             break;
 
         case 0x4E: ; // LSR Absolute
             address = get_absolute_addr();
-            LSR_op(address, emu_read(address));
+            LSR_op(emu_read(address), address);
             break;
 
         case 0x2A: ; // ROL A
@@ -380,22 +381,22 @@ void emulate_CPU() {
 
         case 0x26: ; // ROL Zero Page
             address = read_increment_PC();
-            ROL_op(address, emu_read(address));
+            ROL_op(emu_read(address), address);
             break;
 
         case 0x2E: ; // ROL Absolute
             address = get_absolute_addr();
-            ROL_op(address, emu_read(address));
+            ROL_op(emu_read(address), address);
             break;
 
         case 0x66: ; // ROR Zero Page
             address = read_increment_PC();
-            ROL_op(address, emu_read(address));
+            ROR_op(emu_read(address), address);
             break;
 
         case 0x6E: ; // ROR Absolute
             address = get_absolute_addr();
-            ROL_op(address, emu_read(address));
+            ROR_op(emu_read(address), address);
             break;
 
         case 0x09: ; // ORA Immediate
@@ -466,22 +467,22 @@ void emulate_CPU() {
 
         case 0xE6: ; // INC Zero Page
             address = read_increment_PC();
-            INC_op(address, emu_read(address));
+            INC_op(emu_read(address), address);
             break;
 
         case 0xEE: ; // INC Absolute
             address = get_absolute_addr();
-            INC_op(address, emu_read(address));
+            INC_op(emu_read(address), address);
             break;
         
         case 0xC6: ; // DEC Zero Page
             address = read_increment_PC();
-            DEC_op(address, emu_read(address));
+            DEC_op(emu_read(address), address);
             break;
 
         case 0xCE: ; // DEC Absolute
             address = get_absolute_addr();
-            DEC_op(address, emu_read(address));
+            DEC_op(emu_read(address), address);
             break;
 
         case 0x69: ; // ADC Immediate
@@ -637,6 +638,15 @@ void emu_write(uint16_t address, uint8_t value){
     } else {
         return;
     }
+    // if(address == 0x02){
+    //     print("\n");
+    //     print_hex8(value);
+    //     print(" opcode: ");
+    //     print_hex8(emu.cur_instruction);
+    //     print(" PC: ");
+    //     print_hex16(emu.registers.program_counter);
+    //     print("\n");
+    // }
 
     #if DEBUG
     debug_tracker.writes_mem = true; 
@@ -755,14 +765,14 @@ void LSR_op(uint8_t input, uint16_t address){
 }
 
 void ROL_op(uint8_t input, uint16_t address){
-    bool new_carry_bit = (input & 0x80);
+    bool new_carry_bit = (input >= 0x80);
     input <<= 1;
     if(reg_status() & FLAG_CARRY){
-        input |= 0x01;
+        input |= 0x1;
     }
     emu_write(address, input);
     set_status_flag(FLAG_CARRY, new_carry_bit);
-    set_status_flag(FLAG_ZERO, input == 0);
+    set_status_flag(FLAG_ZERO, input == 0x00);
     set_status_flag(FLAG_NEGATIVE, input >= 0x80);
 }
 

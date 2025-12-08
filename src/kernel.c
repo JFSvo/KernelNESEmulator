@@ -122,6 +122,15 @@ void print_decimal(uint8_t value) {
     }
 }
 
+void print_binary(uint8_t value) {
+    uint8_t mask = 0x80;
+    for(int i = 0; i < 8; i++){
+        char digit = value & mask ? '1' : '0';
+        terminal_writechar(digit, 15);
+        mask >>= 1;
+    }
+}
+
 void panic(const char*msg){
     print(msg);
     while(1) {}
