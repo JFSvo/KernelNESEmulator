@@ -40,7 +40,11 @@ step2:
     mov ds, ax
     mov es, ax
     mov ss, ax
-    mov sp, 0x7c00
+    mov sp, 0x7c00 
+    ; set graphics mode before protected mode
+    mov ax, 0x0013
+    int 0x10
+
     sti ; Enable Interrupts
 
 .load_protected:

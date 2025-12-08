@@ -9,14 +9,6 @@ static uint8_t* vga_buffer = 0;
 static uint8_t* back_buffer = 0;
 
 void vga_init() {
-    // BIOS mode switch: 13h => 320x200x256
-    asm volatile (
-        "mov $0x13, %%ax\n"
-        "int $0x10"
-        :
-        :
-        : "ax"
-    );
 
     vga_buffer  = (uint8_t*)VGA_BUFFER;
     back_buffer = kzalloc(VGA_WIDTH * VGA_HEIGHT);
