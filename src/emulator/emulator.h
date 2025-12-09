@@ -35,7 +35,7 @@ struct emulator {
     uint8_t* ROM;
     uint8_t* header;
 
-    uint8_t cur_instruction;
+    uint8_t cur_opcode;
     int total_CPU_cycles;
 }; 
 
@@ -52,6 +52,7 @@ void set_status_flag(uint8_t flag, bool condition);
 uint8_t read_increment_PC();
 uint8_t read_PC();
 void increment_PC();
+uint8_t set_PC(uint16_t value);
 
 void ASL_op(uint8_t input, uint16_t address);
 void LSR_op(uint8_t input, uint16_t address);
@@ -63,7 +64,11 @@ void INC_op(uint8_t input, uint16_t address);
 void DEC_op(uint8_t input, uint16_t address);
 void CMP_op(uint8_t input, uint8_t reg_value);
 void BIT_op(uint8_t input);
+
 uint16_t get_absolute_addr();
+uint16_t get_absolute_addr_X_indexed();
+uint16_t get_absolute_addr_Y_indexed();
+uint16_t get_ZP_indexed_address(uint8_t reg_value);
 
 extern struct emulator emu;
 

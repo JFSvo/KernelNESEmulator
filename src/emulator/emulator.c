@@ -18,7 +18,7 @@ void emu_init()  {
     emu.ROM = kzalloc(0x8000);
     emu.header = kzalloc(0x10);
     emu.total_CPU_cycles = 8;
-    emu.filepath = "0:/test5.nes";
+    emu.filepath = "0:/test6.nes";
     CPU_halted = false;
     emu_reset();
 }
@@ -32,7 +32,7 @@ void emulate_CPU() {
 
     add_tracelog_entry(&emu);
     uint8_t opcode = read_increment_PC();
-    emu.cur_instruction = opcode;
+    emu.cur_opcode = opcode;
 
     uint8_t result;
     uint8_t temp;
@@ -70,9 +70,24 @@ void emulate_CPU() {
             set_status_flag(FLAG_ZERO, result == 0);
             set_status_flag(FLAG_NEGATIVE, result >= 0x80);
             break;
+            
+        case 0xB5: ; // LDA Zero Page, X
+            address = get_ZP_indexed_address(reg_X());
+            result = set_A_register(emu_read(address));
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+            break;
 
         case 0xAD: ; // LDA Absolute
             address = get_absolute_addr();
+
+            result = set_A_register(emu_read(address));
+            set_status_flag(FLAG_ZERO, result == 0);
+            set_status_flag(FLAG_NEGATIVE, result >= 0x80);
+            break;
+
+        case 0xBD: ; // LDA Absolute, X
+            address = get_absolute_addr_X_indexed();
 
             result = set_A_register(emu_read(address));
             set_status_flag(FLAG_ZERO, result == 0);
@@ -84,8 +99,18 @@ void emulate_CPU() {
             emu_write(address, reg_A());
             break;
 
+        case 0x95: ; // STA Zero Page, X
+            address = get_ZP_indexed_address(reg_X());       
+            emu_write(address, reg_A());
+            break;
+
         case 0x8D: ; // STA Absolute
             address = get_absolute_addr();
+            emu_write(address, reg_A());
+            break;
+
+        case 0x9D: ; // STA Absolute, X
+            address = get_absolute_addr_X_indexed();
             emu_write(address, reg_A());
             break;
 
@@ -232,10 +257,7 @@ void emulate_CPU() {
             break;
         
         case 0x4C: ; // JMP
-            PC_lowbyte = read_increment_PC();
-            PC_highbyte = read_increment_PC();
-
-            set_PC((PC_highbyte << 8) | PC_lowbyte);
+            set_PC(get_absolute_addr());
             break;
 
         case 0xE8: ; // INX
@@ -474,6 +496,11 @@ void emulate_CPU() {
             address = get_absolute_addr();
             INC_op(emu_read(address), address);
             break;
+
+        case 0xFE: ; // INC Absolute, X
+            address = get_absolute_addr_X_indexed();
+            INC_op(emu_read(address), address);
+            break;
         
         case 0xC6: ; // DEC Zero Page
             address = read_increment_PC();
@@ -489,6 +516,11 @@ void emulate_CPU() {
             ADC_op(read_increment_PC());
             break;
         
+        case 0x75: ; // ADC Zero Page, X
+            address = get_ZP_indexed_address(reg_X());
+            ADC_op(emu_read(address));
+            break;
+
         case 0x65: ; // ADC Zero Page
             address = read_increment_PC();
             ADC_op(emu_read(address));
@@ -604,7 +636,6 @@ void emu_run() {
     while(!CPU_halted){
         emulate_CPU();
     }
-    emu_print_hexdump(0x00, 0x0D);
 }
 
 uint8_t emu_read(uint16_t address){
@@ -633,24 +664,15 @@ uint8_t emu_read(uint16_t address){
 
 void emu_write(uint16_t address, uint8_t value){
     // optional: we can add RAM mirroring here
+    #if DEBUG
+    debug_tracker.writes_mem = true; 
+    #endif 
+
     if(address < 0x800){
         emu.RAM[address] = value;
     } else {
         return;
     }
-    // if(address == 0x02){
-    //     print("\n");
-    //     print_hex8(value);
-    //     print(" opcode: ");
-    //     print_hex8(emu.cur_instruction);
-    //     print(" PC: ");
-    //     print_hex16(emu.registers.program_counter);
-    //     print("\n");
-    // }
-
-    #if DEBUG
-    debug_tracker.writes_mem = true; 
-    #endif 
 
     #if TRACELOGGER
     tail_log_set_written_value(value);
@@ -725,6 +747,14 @@ void increment_PC(){
     emu.registers.program_counter++;
 }
 
+uint8_t set_PC(uint16_t address) { 
+    #if TRACELOGGER
+    tail_log_set_address(address);
+    #endif
+    emu.registers.program_counter = address; 
+    return address;
+}
+
 void set_status_flag(uint8_t flag, bool condition){
     if(condition){
         emu.registers.flags |= flag;
@@ -741,11 +771,57 @@ void emu_enable_logger(bool is_enabled){
     logger_enabled = is_enabled;
 }
 
+// Get ZP address indexed to X
+uint16_t get_ZP_indexed_address(uint8_t reg_value){
+    uint8_t indexed_address = read_increment_PC() + reg_value;
+
+    #if TRACELOGGER
+    tail_log_set_indexed_address((uint16_t)indexed_address);
+    #endif
+
+    return indexed_address;
+}
+
+
 // Get absolute address from byte in memory
 uint16_t get_absolute_addr(){
     uint8_t PC_lowbyte = read_increment_PC();
     uint8_t PC_highbyte = read_increment_PC();
-    return (PC_highbyte << 8) | PC_lowbyte;
+    uint16_t address = (PC_highbyte << 8) | PC_lowbyte;
+
+    #if TRACELOGGER
+    tail_log_set_address(address);
+    #endif
+    
+    return address;
+}
+
+// Get absolute address indexed to X
+uint16_t get_absolute_addr_X_indexed(){
+    uint8_t PC_lowbyte = read_increment_PC();
+    uint8_t PC_highbyte = read_increment_PC();
+    uint16_t address = (PC_highbyte << 8) | PC_lowbyte;
+    address += reg_X();
+
+    #if TRACELOGGER
+    tail_log_set_address(address);
+    #endif
+
+    return address;
+}
+
+// Get absolute address indexed to Y
+uint16_t get_absolute_addr_Y_indexed(){
+    uint8_t PC_lowbyte = read_increment_PC();
+    uint8_t PC_highbyte = read_increment_PC();
+    uint16_t address = (PC_highbyte << 8) | PC_lowbyte;
+    address += reg_Y();
+
+    #if TRACELOGGER
+    tail_log_set_address(address);
+    #endif
+
+    return address;
 }
 
 void ASL_op(uint8_t input, uint16_t address){

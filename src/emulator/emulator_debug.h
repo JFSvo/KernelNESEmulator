@@ -111,7 +111,6 @@ static inline uint8_t set_status_register(uint8_t value) {
 static inline uint8_t reg_status(void) { return emu.registers.flags;}
 #endif
 
-static inline uint8_t set_PC(uint16_t value) { emu.registers.program_counter = value; return value;}
 static inline uint16_t program_counter(void) { return emu.registers.program_counter; }
 
 #endif

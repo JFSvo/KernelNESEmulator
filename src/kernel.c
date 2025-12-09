@@ -10,7 +10,7 @@
 #include "memory/paging/paging.h"
 #include "disk/disk.h"
 #include "disk/streamer.h"
-#include "task/tss.h"
+// #include "task/tss.h"
 #include "string/string.h"
 #include "fs/pparser.h"
 #include "fs/file.h"
@@ -18,15 +18,15 @@
 #include "drivers/timer/pit.h"
 #include "drivers/vga/vga.h"
 
-struct tss tss; 
+//struct tss tss; 
 struct gdt gdt_real[PEACHOS_TOTAL_GDT_SEGMENTS]; 
 struct gdt_structured gdt_structured[PEACHOS_TOTAL_GDT_SEGMENTS] = { 
   {.base = 0x00, .limit = 0x00, .type = 0x00}, // NULL Segment 
   {.base = 0x00, .limit = 0xffffffff, .type = 0x9a}, // Kernel code segment 
   {.base = 0x00, .limit = 0xffffffff, .type = 0x92},// Kernel data segment 
-  {.base = 0x00, .limit = 0xffffffff, .type = 0xf8},// User code segment
-  {.base = 0x00, .limit = 0xffffffff, .type = 0xf2},// User data segment 
-  {.base = (uint32_t)&tss, .limit=sizeof(tss), .type = 0xE9}// TSS Segment
+//   {.base = 0x00, .limit = 0xffffffff, .type = 0xf8},// User code segment
+//   {.base = 0x00, .limit = 0xffffffff, .type = 0xf2},// User data segment 
+//   {.base = (uint32_t)&tss, .limit=sizeof(tss), .type = 0xE9}// TSS Segment
 };
 
 uint16_t* video_mem = 0;  
@@ -151,14 +151,18 @@ void kernel_main()  {
     kheap_init();
     
     fs_init();
+
+    disk_search_and_init();
     
     idt_init();
 
     // Setup the TSS 
-    memset(&tss, 0x00, sizeof(tss)); 
-    tss.esp0 = 0x600000; 
-    tss.ss0 = KERNEL_DATA_SELECTOR; 
-    
+    // memset(&tss, 0x00, sizeof(tss)); 
+    // tss.esp0 = 0x600000; 
+    // tss.ss0 = KERNEL_DATA_SELECTOR; 
+
+    // tss_load(0x28);
+
      // Setup paging
     kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     
@@ -171,34 +175,29 @@ void kernel_main()  {
     // Enable paging
     enable_paging();
 
-    disk_search_and_init();
-
     enable_interrupts();
 
-      // === NEW: init VGA + PIT ===
-    vga_init();
-    pit_init(1000); // 1000 Hz => 1ms ticks
-    print("VGA and PIT initialized.\n");
+    // === NEW: init VGA + PIT ===
+    // vga_init();
+    // pit_init(1000); // 1000 Hz => 1ms ticks
+    // print("VGA and PIT initialized.\n");
 
-    // Quick visual sanity test
-    print("Drawing red screen for 2 seconds...\n");
-    vga_clear_screen(0x04);   // red
-    vga_swap_buffers();
-    pit_sleep(2000);
+    // //Quick visual sanity test
+    // print("Drawing red screen for 2 seconds...\n");
+    // vga_clear_screen(0x04);   // red
+    // vga_swap_buffers();
+    // pit_sleep(2000);
 
-    print("Drawing blue screen for 2 seconds...\n");
-    vga_clear_screen(0x01);   // blue
-    vga_swap_buffers();
-    pit_sleep(2000);
+    // print("Drawing blue screen for 2 seconds...\n");
+    // vga_clear_screen(0x01);   // blue
+    // vga_swap_buffers();
+    // pit_sleep(2000);
 
-    print("Back to text mode kernel loop.\n");
-
-    while (1) {
+    // print("Back to text mode kernel loop.\n");
 
     emu_enable_logger(true);
     emu_init();
 
     while(1) {} 
 
-}
 }

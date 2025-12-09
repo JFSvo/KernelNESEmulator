@@ -16,6 +16,7 @@ int current_length = 0;
 int current_operand = 0;
 bool read_value_set = false;
 bool write_value_set = false;
+struct tracelog_entry* cur_print_entry;
 
 struct tracelog_entry* add_tracelog_entry(struct emulator* emu){
     int res = 0;
@@ -33,6 +34,7 @@ struct tracelog_entry* add_tracelog_entry(struct emulator* emu){
 
     if (log_head == 0) {
         log_head = entry;
+        cur_print_entry = log_head;
         log_tail = entry;
         init_log_entry(entry, emu);
         goto out;
@@ -62,6 +64,14 @@ void tail_log_set_operand(uint8_t byte) {
         log_tail->operands[current_operand] = byte;
         current_operand++;
     }
+}
+
+void tail_log_set_address(uint16_t address) {
+    log_tail->address = address;
+}
+
+void tail_log_set_indexed_address(uint16_t indexed_address) {
+    log_tail->indexed_address = indexed_address;
 }
 
 void tail_log_set_written_value(uint8_t byte) {
@@ -111,7 +121,7 @@ void print_tracelog() {
 }
 
 void print_latest_tracelog_entry() {
-    if(current_length >= 20 && current_length < 40){
+    if(current_length >= 00 && current_length < 30){
         print_tracelog_entry(log_tail);
     }
 }
@@ -158,42 +168,72 @@ void print_tracelog_operands(struct tracelog_entry* cur_log_entry, const struct 
             print_tracelog_address(cur_log_entry, address);
             break;
 
-        case ADDR_ABSOLUTE: 
-            address = ((cur_log_entry->operands[1] << 8) | cur_log_entry->operands[0]);
-            print_tracelog_address(cur_log_entry, address);
-            break;   
+        case ADDR_ABSOLUTE: case ADDR_ABSOLUTE_Y: case ADDR_ABSOLUTE_X: case ADDR_RELATIVE: 
+            print_tracelog_address(cur_log_entry, cur_log_entry->address);
+            break;
+            
+        case ADDR_ZERO_PAGE_X:
+            print_tracelog_ZP_indexed(cur_log_entry, cur_log_entry->address, "X");
+            break;
+
+        case ADDR_ZERO_PAGE_Y:
+            print_tracelog_ZP_indexed(cur_log_entry, cur_log_entry->address, "Y");
+            break;
 
         case ADDR_IMMEDIATE: 
             print("#$");
             print_hex8(cur_log_entry->operands[0]);
-            print_spaces(9);
+            print_spaces(17);
             break;
 
         default:
-            print_spaces(13);
+            print_spaces(21);
             break;
     }
 }
 
 void print_tracelog_address(struct tracelog_entry* cur_log_entry, uint16_t address){
-    uint8_t print_value;
-    int extra_spaces = 0;
+    int extra_spaces = 8;
     print("$");
     if(address <= 0xFF){
         print_hex8(address);
-        extra_spaces = 4;
+        extra_spaces += 4;
     } else {
         print_hex16(address);
-        extra_spaces = 2;
+        extra_spaces += 2;
     }
 
-    print_value = write_value_set ? cur_log_entry->written_value : cur_log_entry->read_value;
+    uint8_t print_value = write_value_set ? cur_log_entry->written_value : cur_log_entry->read_value;
     if(read_value_set || write_value_set){
         print(" = $");
         print_hex8(print_value);
     } else {
-        print_spaces(6);
+        extra_spaces += (6);
     }
     print_spaces(extra_spaces);
+}
 
+void print_tracelog_ZP_indexed(struct tracelog_entry* cur_log_entry, uint8_t address, char* reg_name){
+    int extra_spaces = 2;
+    print("$");
+    print_hex8(cur_log_entry->operands[0]);
+    print(",");
+    print(reg_name);
+    print(" [$");
+    print_hex16(cur_log_entry->indexed_address);
+    print("]");
+    uint8_t print_value = write_value_set ? cur_log_entry->written_value : cur_log_entry->read_value;
+    if(read_value_set || write_value_set){
+        print(" = $");
+        print_hex8(print_value);
+    } else {
+        extra_spaces = 10;
+    }
+    print_spaces(extra_spaces);
+}
+
+void tracelog_print_entries(int num_entries){
+    // for(int i = 0; i < num_entries; i++){
+    //     print("TRACELOG HERE!");
+    // }
 }
