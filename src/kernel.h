@@ -14,6 +14,8 @@
 
 
 void kernel_main();
+void reset_terminal();
+
 void print(const char* str);
 void print_spaces(int num_spaces);
 void panic(const char* msg);
@@ -21,7 +23,7 @@ void print_hexdump(const uint8_t* data, int size);
 void emu_print_hexdump(uint16_t emu_address, int size);
 void print_hex8(uint8_t value);
 void print_hex16(uint16_t value);
-void print_decimal(uint8_t value);
+void print_decimal(int value);
 void print_binary(uint8_t value);
 
 #endif

@@ -43,6 +43,11 @@ void terminal_putchar(int x, int y, char c, char colour)  {
 
 void terminal_writechar(char c, char colour) {  
     if (c == '\n')  {
+        int temp_col = terminal_col;
+        while(temp_col <= VGA_WIDTH){
+            terminal_putchar(temp_col, terminal_row, ' ', 0); 
+            temp_col++; 
+        }
         terminal_row += 1;  
         terminal_col = 0;  
         return;  
@@ -53,6 +58,11 @@ void terminal_writechar(char c, char colour) {
         terminal_col = 0;  terminal_row += 1;  
     }  
 }  
+
+void reset_terminal(){
+    terminal_row = 0;  
+    terminal_col = 0;  
+}
 
 void terminal_initialize()  {  
     video_mem = (uint16_t*)(0xB8000);  
@@ -105,13 +115,13 @@ void print_hex16(uint16_t value)  {
     print_hex8(value & 0xFF);  
 }  
 
-void print_decimal(uint8_t value) {
+void print_decimal(int value) {
     if (value == 0) {
         terminal_writechar('0', 15);
         return;
     }
 
-    char digits[3];
+    char digits[8];
     int i = 0;
 
     while (value > 0) {

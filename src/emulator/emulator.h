@@ -1,7 +1,9 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
-#define DEBUG true
+#include <stdbool.h>
+
+#define DEBUG false
 #define TRACELOGGER true
 
 #define RAM_SIZE 800 

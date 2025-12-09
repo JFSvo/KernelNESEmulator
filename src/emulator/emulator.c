@@ -636,6 +636,9 @@ void emu_run() {
     while(!CPU_halted){
         emulate_CPU();
     }
+    #if TRACELOGGER
+    tracelog_print_entries();
+    #endif
 }
 
 uint8_t emu_read(uint16_t address){
