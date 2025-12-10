@@ -114,6 +114,16 @@ void emulate_CPU() {
             emu_write(address, reg_A());
             break;
 
+        case 0x91: ; // STA (Indirect), Y
+            address = get_indirect_address_Y_indexed();
+            emu_write(address, reg_A());
+            break;
+        
+        case 0x81: ; // STA (Indirect, X)
+            address = get_indirect_address_X_indexed();
+            emu_write(address, reg_A());
+            break;
+
         case 0x86: ; // STX Zero Page
             address = read_increment_PC();
             emu_write(address, reg_X());
@@ -258,6 +268,13 @@ void emulate_CPU() {
         
         case 0x4C: ; // JMP
             set_PC(get_absolute_addr());
+            break;
+                
+        case 0x6C: ; // JMP indirect
+            address = get_absolute_addr();
+            PC_lowbyte = emu_read(address);
+            PC_highbyte = emu_read(address + 1);
+            set_PC((PC_highbyte << 8) | PC_lowbyte);
             break;
 
         case 0xE8: ; // INX
@@ -825,6 +842,35 @@ uint16_t get_absolute_addr_Y_indexed(){
     #endif
 
     return address;
+}
+
+// Get indirect indexed address to Y 
+uint16_t get_indirect_address_Y_indexed(){
+    uint8_t address = read_increment_PC();
+    uint8_t PC_lowbyte = emu_read(address);
+    uint8_t PC_highbyte = emu_read(address + 1);
+    uint16_t indirect_addr = (PC_highbyte << 8) | PC_lowbyte;
+    indirect_addr += reg_Y();
+
+    #if TRACELOGGER
+    tail_log_set_indexed_address(indirect_addr);
+    #endif
+
+    return indirect_addr;
+}
+
+// Get indexed indirect address to X 
+uint16_t get_indirect_address_X_indexed(){
+    uint8_t address = read_increment_PC() + reg_X();
+    uint8_t PC_lowbyte = emu_read(address);
+    uint8_t PC_highbyte = emu_read(address + 1);
+    uint16_t indirect_addr = (PC_highbyte << 8) | PC_lowbyte;
+
+    #if TRACELOGGER
+    tail_log_set_indexed_address(indirect_addr);
+    #endif
+
+    return indirect_addr;
 }
 
 void ASL_op(uint8_t input, uint16_t address){

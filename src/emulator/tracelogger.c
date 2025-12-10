@@ -15,6 +15,7 @@ struct tracelog_entry* log_tail = NULL;
 int current_length = 0;
 int current_operand = 0;
 struct tracelog_entry* cur_selected_entry;
+int cur_selected_index = 0;
 
 struct tracelog_entry* add_tracelog_entry(struct emulator* emu){
     int res = 0;
@@ -169,34 +170,42 @@ void print_tracelog_operands(struct tracelog_entry* cur_log_entry, const struct 
             break;
             
         case ADDR_ZERO_PAGE_X:
-            print_tracelog_ZP_indexed(cur_log_entry, cur_log_entry->address, "X");
+            print_tracelog_ZP_indexed(cur_log_entry, "X");
             break;
 
         case ADDR_ZERO_PAGE_Y:
-            print_tracelog_ZP_indexed(cur_log_entry, cur_log_entry->address, "Y");
+            print_tracelog_ZP_indexed(cur_log_entry, "Y");
+            break;
+
+        case ADDR_INDIRECT_Y:
+            print_tracelog_indirect_indexed(cur_log_entry, 'Y');
+            break;
+
+        case ADDR_INDIRECT_X:
+            print_tracelog_indirect_indexed(cur_log_entry, 'X');
+            
             break;
 
         case ADDR_IMMEDIATE: 
             print("#$");
             print_hex8(cur_log_entry->operands[0]);
-            print_spaces(17);
+            print_spaces(19);
             break;
 
         default:
-            print_spaces(21);
+            print_spaces(23);
             break;
     }
 }
 
 void print_tracelog_address(struct tracelog_entry* cur_log_entry, uint16_t address){
-    int extra_spaces = 8;
+    int extra_spaces = 12;
     print("$");
     if(address <= 0xFF){
         print_hex8(address);
-        extra_spaces += 4;
+        extra_spaces += 2;
     } else {
         print_hex16(address);
-        extra_spaces += 2;
     }
 
     uint8_t print_value = cur_log_entry->write_value_set ? cur_log_entry->written_value : cur_log_entry->read_value;
@@ -204,18 +213,37 @@ void print_tracelog_address(struct tracelog_entry* cur_log_entry, uint16_t addre
         print(" = $");
         print_hex8(print_value);
     } else {
-        extra_spaces += (6);
+        extra_spaces += 6;
     }
     print_spaces(extra_spaces);
 }
 
-void print_tracelog_ZP_indexed(struct tracelog_entry* cur_log_entry, uint8_t address, char* reg_name){
-    int extra_spaces = 2;
+void print_tracelog_ZP_indexed(struct tracelog_entry* cur_log_entry, char* reg_name){
+    int extra_spaces = 4;
     print("$");
     print_hex8(cur_log_entry->operands[0]);
     print(",");
     print(reg_name);
     print(" [$");
+    print_hex16(cur_log_entry->indexed_address);
+    print("]");
+
+    uint8_t print_value = cur_log_entry->write_value_set ? cur_log_entry->written_value : cur_log_entry->read_value;
+    if(cur_log_entry->read_value_set || cur_log_entry->write_value_set){
+        print(" = $");
+        print_hex8(print_value);
+    } else {
+        extra_spaces += 6;
+    }
+    print_spaces(extra_spaces);
+}
+
+void print_tracelog_indirect_indexed(struct tracelog_entry* cur_log_entry, char reg_name){
+    int extra_spaces = 2;
+    print("($");
+    print_hex8(cur_log_entry->operands[0]);
+    const char* index_string = (reg_name == 'Y' ? "),Y [$" : ",X) [$");
+    print(index_string);
     print_hex16(cur_log_entry->indexed_address);
     print("]");
 
@@ -232,15 +260,18 @@ void print_tracelog_ZP_indexed(struct tracelog_entry* cur_log_entry, uint8_t add
 void tracelog_print_entries(){
     reset_terminal();
     struct tracelog_entry* print_entry = cur_selected_entry;
-    for(int i = 0; i < NUM_PRINT_ENTRIES; i++){
+    for(int i = 0; i <= NUM_PRINT_ENTRIES; i++){
         print_tracelog_entry(print_entry);
-        print_entry = print_entry->next;
+        if(print_entry != log_tail){
+            print_entry = print_entry->next;
+        }
     }
 }
 
 void scroll_down(){
-    if(cur_selected_entry != log_tail){
+    if(cur_selected_index + NUM_PRINT_ENTRIES < current_length){
         cur_selected_entry = cur_selected_entry->next;
+        cur_selected_index++;
     }
     tracelog_print_entries();
 }
@@ -248,6 +279,7 @@ void scroll_down(){
 void scroll_up(){
     if(cur_selected_entry != log_head){
         cur_selected_entry = cur_selected_entry->prev;
+        cur_selected_index--;
     }
     tracelog_print_entries();
 }

@@ -5,7 +5,7 @@
 #include "emulator/opcode_table.h"
 
 #define TRACELOG_MAX_LENGTH 256
-#define NUM_PRINT_ENTRIES 30
+#define NUM_PRINT_ENTRIES 24
 
 struct tracelog_entry {
     // The next entry in the tracelog 
@@ -45,7 +45,8 @@ void print_latest_tracelog_entry();
 void print_tracelog_entry(struct tracelog_entry* entry);
 void print_tracelog_operands(struct tracelog_entry* cur_log_entry, const struct opcode_entry* opcode_entry);
 void print_tracelog_address(struct tracelog_entry* cur_log_entry, uint16_t address);
-void print_tracelog_ZP_indexed(struct tracelog_entry* cur_log_entry, uint8_t address, char* reg_name);
+void print_tracelog_ZP_indexed(struct tracelog_entry* cur_log_entry, char* reg_name);
+void print_tracelog_indirect_indexed(struct tracelog_entry* cur_log_entry, char reg_name);
 
 void scroll_down();
 void scroll_up();

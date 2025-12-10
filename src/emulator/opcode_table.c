@@ -151,7 +151,7 @@ const struct opcode_entry opcode_table[NUM_OPCODES] = {
   {0x8E, "STX", ADDR_ABSOLUTE,     3, 4, 0x08, 0x00, false, true   },
   {0x8F, "SAX", ADDR_ABSOLUTE,     3, 4, 0x00, 0x00, false, true   },
   {0x90, "BCC", ADDR_RELATIVE,     2, 3, 0x01, 0x00, false, false  },
-  {0x91, "STA", ADDR_INDIRECT_Y,   2, 6, 0x10, 0x00, true,  true   },
+  {0x91, "STA", ADDR_INDIRECT_Y,   2, 6, 0x14, 0x00, true,  true   },
   {0x92, "KIL", MODE_UNKNOWN,      1, 0, 0x00, 0x00, false, false  },
   {0x93, "AHX", ADDR_INDIRECT_Y,   2, 6, 0x00, 0x00, true,  true   },
   {0x94, "STY", ADDR_ZERO_PAGE_X,  2, 4, 0x04, 0x00, true,  true   },

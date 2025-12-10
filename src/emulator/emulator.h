@@ -71,6 +71,8 @@ uint16_t get_absolute_addr();
 uint16_t get_absolute_addr_X_indexed();
 uint16_t get_absolute_addr_Y_indexed();
 uint16_t get_ZP_indexed_address(uint8_t reg_value);
+uint16_t get_indirect_address_Y_indexed();
+uint16_t get_indirect_address_X_indexed();
 
 extern struct emulator emu;
 
