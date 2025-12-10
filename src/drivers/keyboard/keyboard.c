@@ -1,7 +1,7 @@
 #include "keyboard.h"
 #include "kernel.h"
-#include "emulator/tracelogger.h"
-#include "emulator/emulator.h"
+#include "emulator/CPU/tracelogger.h"
+#include "emulator/CPU/emulator.h"
 
 void handle_scancode(uint8_t byte){
     switch(byte){

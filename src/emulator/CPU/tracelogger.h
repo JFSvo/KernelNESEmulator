@@ -1,8 +1,8 @@
 #ifndef TRACELOGGER_H
 #define TRACELOGGER_H
 
-#include "emulator/emulator.h"
-#include "emulator/opcode_table.h"
+#include "emulator/CPU/emulator.h"
+#include "emulator/CPU/opcode_table.h"
 
 #define TRACELOG_MAX_LENGTH 256
 #define NUM_PRINT_ENTRIES 24

@@ -1,4 +1,4 @@
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/string/string.o ./build/fs/pparser.o ./build/disk/streamer.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/emulator/emulator.o ./build/emulator/tracelogger.o ./build/emulator/opcode_table.o ./build/emulator/emulator_debug.o ./build/drivers/timer/pit.o ./build/drivers/vga/vga.o ./build/drivers/keyboard/keyboard.o
+FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/string/string.o ./build/fs/pparser.o ./build/disk/streamer.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/emulator/CPU/emulator.o ./build/emulator/CPU/tracelogger.o ./build/emulator/CPU/opcode_table.o ./build/emulator/CPU/emulator_debug.o ./build/emulator/PPU/ppu.o ./build/drivers/timer/pit.o ./build/drivers/vga/vga.o ./build/drivers/keyboard/keyboard.o
 # ./build/task/tss.asm.o ./build/task/task.o ./build/task/task.asm.o ./build/task/process.o
 INCLUDES = -I ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc 
@@ -88,17 +88,20 @@ all: ./bin/boot.bin ./bin/kernel.bin
 # ./build/task/task.asm.o: ./src/task/task.asm 
 # 	nasm -f elf -g ./src/task/task.asm -o ./build/task/task.asm.o
 
-./build/emulator/emulator.o: ./src/emulator/emulator.c 
-	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/emulator.c -o ./build/emulator/emulator.o
+./build/emulator/CPU/emulator.o: ./src/emulator/CPU/emulator.c 
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator/CPU $(FLAGS) -std=gnu99 -c ./src/emulator/CPU/emulator.c -o ./build/emulator/CPU/emulator.o
 
-./build/emulator/tracelogger.o: ./src/emulator/tracelogger.c 
-	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/tracelogger.c -o ./build/emulator/tracelogger.o
+./build/emulator/CPU/tracelogger.o: ./src/emulator/CPU/tracelogger.c 
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator/CPU $(FLAGS) -std=gnu99 -c ./src/emulator/CPU/tracelogger.c -o ./build/emulator/CPU/tracelogger.o
 
-./build/emulator/opcode_table.o: ./src/emulator/opcode_table.c 
-	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/opcode_table.c -o ./build/emulator/opcode_table.o 
+./build/emulator/CPU/opcode_table.o: ./src/emulator/CPU/opcode_table.c 
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator/CPU $(FLAGS) -std=gnu99 -c ./src/emulator/CPU/opcode_table.c -o ./build/emulator/CPU/opcode_table.o 
 	
-./build/emulator/emulator_debug.o: ./src/emulator/emulator_debug.c 
-	i686-elf-gcc $(INCLUDES) -I ./src/emulator $(FLAGS) -std=gnu99 -c ./src/emulator/emulator_debug.c -o ./build/emulator/emulator_debug.o
+./build/emulator/CPU/emulator_debug.o: ./src/emulator/CPU/emulator_debug.c 
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator/CPU $(FLAGS) -std=gnu99 -c ./src/emulator/CPU/emulator_debug.c -o ./build/emulator/CPU/emulator_debug.o
+
+./build/emulator/PPU/ppu.o: ./src/emulator/PPU/ppu.c 
+	i686-elf-gcc $(INCLUDES) -I ./src/emulator/PPU $(FLAGS) -std=gnu99 -c ./src/emulator/PPU/ppu.c -o ./build/emulator/PPU/ppu.o
 
 ./build/drivers/timer/pit.o: ./src/drivers/timer/pit.c
 	i686-elf-gcc $(INCLUDES) -I./src/drivers/timer $(FLAGS) -std=gnu99 -c ./src/drivers/timer/pit.c -o ./build/drivers/timer/pit.o

@@ -14,7 +14,8 @@
 #include "string/string.h"
 #include "fs/pparser.h"
 #include "fs/file.h"
-#include "emulator/emulator.h"
+#include "emulator/CPU/emulator.h"
+#include "emulator/PPU/ppu.h"
 #include "drivers/timer/pit.h"
 #include "drivers/vga/vga.h"
 
@@ -205,8 +206,9 @@ void kernel_main()  {
 
     // print("Back to text mode kernel loop.\n");
 
-    emu_enable_logger(true);
-    emu_init();
+    // emu_enable_logger(true);
+    // emu_init();
+    ppu_init();
 
     while(1) {} 
 
