@@ -41,6 +41,11 @@ step2:
     mov es, ax
     mov ss, ax
     mov sp, 0x7c00
+    %ifdef VESA_MODE
+        mov ax, 0x4F02	; set VBE mode
+        mov bx, 0x4111	; VBE mode number; notice that bits 0-13 contain the mode number and bit 14 (LFB) is set and bit 15 (DM) is clear.
+        int 0x10	
+    %endif
     sti ; Enable Interrupts
 
 .load_protected:
