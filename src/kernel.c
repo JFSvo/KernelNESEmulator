@@ -190,14 +190,14 @@ void kernel_main()  {
 
     //=== NEW: init VGA + PIT ===
     vga_init();
-    pit_init(1000); // 1000 Hz => 1ms ticks
+    // pit_init(1000); // 1000 Hz => 1ms ticks
     //print("VGA and PIT initialized.\n");
 
     // //Quick visual sanity test
     // print("Drawing red screen for 2 seconds...\n");
     vga_clear_screen(0x04);   // red
     vga_swap_buffers();
-    pit_sleep(2000);
+    // pit_sleep(2000);
 
     // print("Drawing blue screen for 2 seconds...\n");
     // vga_clear_screen(0x01);   // blue
