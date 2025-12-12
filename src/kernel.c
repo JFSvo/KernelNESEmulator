@@ -1,6 +1,7 @@
-#include "kernel.h"  
-#include <stddef.h>  
+#include "kernel.h"
+#include <stddef.h>
 #include <stdint.h>
+
 #include "idt/idt.h"
 #include "io/io.h"
 #include "memory/memory.h"
@@ -14,107 +15,115 @@
 #include "string/string.h"
 #include "fs/pparser.h"
 #include "fs/file.h"
-#include "emulator/CPU/emulator.h"
+//#include "emulator/CPU/emulator.h"
 #include "emulator/PPU/ppu.h"
 #include "drivers/timer/pit.h"
 #include "drivers/vga/vga.h"
 
-//struct tss tss; 
-struct gdt gdt_real[PEACHOS_TOTAL_GDT_SEGMENTS]; 
-struct gdt_structured gdt_structured[PEACHOS_TOTAL_GDT_SEGMENTS] = { 
-  {.base = 0x00, .limit = 0x00, .type = 0x00}, // NULL Segment 
-  {.base = 0x00, .limit = 0xffffffff, .type = 0x9a}, // Kernel code segment 
-  {.base = 0x00, .limit = 0xffffffff, .type = 0x92},// Kernel data segment 
-//   {.base = 0x00, .limit = 0xffffffff, .type = 0xf8},// User code segment
-//   {.base = 0x00, .limit = 0xffffffff, .type = 0xf2},// User data segment 
-//   {.base = (uint32_t)&tss, .limit=sizeof(tss), .type = 0xE9}// TSS Segment
+#define TERM_WIDTH  80
+#define TERM_HEIGHT 25
+
+struct gdt gdt_real[PEACHOS_TOTAL_GDT_SEGMENTS];
+
+struct gdt_structured gdt_structured[PEACHOS_TOTAL_GDT_SEGMENTS] = {
+    { .base = 0x00, .limit = 0x00,       .type = 0x00 }, // NULL Segment
+    { .base = 0x00, .limit = 0xffffffff, .type = 0x9a }, // Kernel code
+    { .base = 0x00, .limit = 0xffffffff, .type = 0x92 }, // Kernel data
+    // User / TSS segments commented out for now
+    // { .base = 0x00, .limit = 0xffffffff, .type = 0xf8 }, // User code
+    // { .base = 0x00, .limit = 0xffffffff, .type = 0xf2 }, // User data
+    // { .base = (uint32_t)&tss, .limit = sizeof(tss), .type = 0xE9 } // TSS
 };
 
-uint16_t* video_mem = 0;  
-uint16_t terminal_row = 0;  
-uint16_t terminal_col = 0;  
+uint16_t* video_mem   = 0;
+uint16_t  terminal_row = 0;
+uint16_t  terminal_col = 0;
 
-uint16_t terminal_make_char(char c, char colour)  {  
-    return (colour << 8) | c;  
-}  
+uint16_t terminal_make_char(char c, char colour) {
+    return (colour << 8) | (uint8_t)c;
+}
 
-void terminal_putchar(int x, int y, char c, char colour)  {  
-    video_mem[(y * VGA_WIDTH) + x] = terminal_make_char(c, colour);  
-}  
+void terminal_putchar(int x, int y, char c, char colour) {
+    video_mem[(y * TERM_WIDTH) + x] = terminal_make_char(c, colour);
+}
 
-void terminal_writechar(char c, char colour) {  
-    if (c == '\n')  {
+void terminal_writechar(char c, char colour) {
+    if (c == '\n') {
         int temp_col = terminal_col;
-        while(temp_col <= VGA_WIDTH){
-            terminal_putchar(temp_col, terminal_row, ' ', 0); 
-            temp_col++; 
+        while (temp_col < TERM_WIDTH) {
+            terminal_putchar(temp_col, terminal_row, ' ', 0);
+            temp_col++;
         }
-        terminal_row += 1;  
-        terminal_col = 0;  
-        return;  
-    }  
-    terminal_putchar(terminal_col, terminal_row, c, colour);  
+        terminal_row += 1;
+        terminal_col = 0;
+        return;
+    }
+
+    terminal_putchar(terminal_col, terminal_row, c, colour);
     terminal_col += 1;
-    if (terminal_col >= VGA_WIDTH)  {  
-        terminal_col = 0;  terminal_row += 1;  
-    }  
-}  
 
-void reset_terminal(){
-    terminal_row = 0;  
-    terminal_col = 0;  
+    if (terminal_col >= TERM_WIDTH) {
+        terminal_col = 0;
+        terminal_row += 1;
+    }
 }
 
-void terminal_initialize()  {  
-    video_mem = (uint16_t*)(0xB8000);  
-    terminal_row = 0;  
-    terminal_col = 0;  
-    for (int y = 0; y < VGA_HEIGHT; y++)  {  
-        for (int x = 0; x < VGA_WIDTH; x++)  {  
-            terminal_putchar(x, y, ' ', 0);  
-        }  
-    }  
-}  
-
-void print(const char* str)  {  
-    size_t len = strlen(str);  
-    for (int i = 0; i < len; i++)  {  
-        terminal_writechar(str[i], 15);  
-    }  
+void reset_terminal() {
+    terminal_row = 0;
+    terminal_col = 0;
 }
 
-void print_spaces(int num_spaces){
-    for(int i = 0; i <  num_spaces; i++){
+void terminal_initialize() {
+    video_mem     = (uint16_t*)(0xB8000);
+    terminal_row  = 0;
+    terminal_col  = 0;
+
+    for (int y = 0; y < TERM_HEIGHT; y++) {
+        for (int x = 0; x < TERM_WIDTH; x++) {
+            terminal_putchar(x, y, ' ', 0);
+        }
+    }
+}
+
+void print(const char* str) {
+    size_t len = strlen(str);
+    for (size_t i = 0; i < len; i++) {
+        terminal_writechar(str[i], 15);
+    }
+}
+
+void print_spaces(int num_spaces) {
+    for (int i = 0; i < num_spaces; i++) {
         print(" ");
     }
 }
 
-void print_hexdump(const uint8_t* data, int size)  {  
-    for (int i = 0; i < size+1; i++) {
+void print_hexdump(const uint8_t* data, int size) {
+    for (int i = 0; i < size + 1; i++) {
         uint8_t byte = data[i];
-        terminal_writechar(gethexchar(byte >> 4), 15); 
-        terminal_writechar(gethexchar(byte & 0xF), 15);  
-    }  
-}  
-
-void emu_print_hexdump(uint16_t emu_address, int size)  {  
-    for (int i = 0; i < size+1; i++) {
-        uint8_t byte = emu_read(emu_address+i);
-        terminal_writechar(gethexchar(byte >> 4), 15); 
+        terminal_writechar(gethexchar(byte >> 4), 15);
         terminal_writechar(gethexchar(byte & 0xF), 15);
-        terminal_writechar(' ', 0);    
-    }  
-}  
+    }
+}
 
-void print_hex8(uint8_t value)  {  
-    terminal_writechar(gethexchar(value >> 4), 15); 
-    terminal_writechar(gethexchar(value & 0xF), 15);  
-}  
+//void emu_print_hexdump(uint16_t emu_address, int size) {
+    //for (int i = 0; i < size + 1; i++) {
+        //uint8_t byte = emu_read(emu_address + i);
+        //terminal_writechar(gethexchar(byte >> 4), 15);
+        //terminal_writechar(gethexchar(byte & 0xF), 15);
+        //terminal_writechar(' ', 0);
+    //}
+//}
 
-void print_hex16(uint16_t value)  {  
-    print_hex8((value >> 8) & 0xFF); 
-    print_hex8(value & 0xFF);  
-}  
+void print_hex8(uint8_t value) {
+    terminal_writechar(gethexchar(value >> 4), 15);
+    terminal_writechar(gethexchar(value & 0xF), 15);
+}
+
+void print_hex16(uint16_t value) {
+    print_hex8((value >> 8) & 0xFF);
+    print_hex8(value & 0xFF);
+}
 
 void print_decimal(int value) {
     if (value == 0) {
@@ -125,91 +134,77 @@ void print_decimal(int value) {
     char digits[8];
     int i = 0;
 
-    while (value > 0) {
+    while (value > 0 && i < (int)sizeof(digits)) {
         digits[i++] = (value % 10) + '0';
         value /= 10;
     }
 
-    for (int j = i-1; j >= 0; j--) {
+    for (int j = i - 1; j >= 0; j--) {
         terminal_writechar(digits[j], 15);
     }
 }
 
 void print_binary(uint8_t value) {
     uint8_t mask = 0x80;
-    for(int i = 0; i < 8; i++){
-        char digit = value & mask ? '1' : '0';
+    for (int i = 0; i < 8; i++) {
+        char digit = (value & mask) ? '1' : '0';
         terminal_writechar(digit, 15);
         mask >>= 1;
     }
 }
 
-void panic(const char*msg){
+void panic(const char* msg) {
     print(msg);
-    while(1) {}
+    while (1) { }
 }
 
 static struct paging_4gb_chunk* kernel_chunk = 0;
 
-void kernel_main()  {  
-    terminal_initialize();  
+void kernel_main() {
+    terminal_initialize();
 
-    // GDT CODE
-    memset(gdt_real, 0x00, sizeof(gdt_real)); 
-    gdt_structured_to_gdt(gdt_real, gdt_structured, PEACHOS_TOTAL_GDT_SEGMENTS); 
-    gdt_load(gdt_real, sizeof(gdt_real)); 
+    // ---- GDT ----
+    memset(gdt_real, 0x00, sizeof(gdt_real));
+    gdt_structured_to_gdt(gdt_real, gdt_structured, PEACHOS_TOTAL_GDT_SEGMENTS);
+    gdt_load(gdt_real, sizeof(gdt_real));
 
+    // ---- Heap, FS, disks ----
     kheap_init();
-    
     fs_init();
-
     disk_search_and_init();
-    
+
+    // ---- IDT ----
     idt_init();
 
-    // Setup the TSS 
-    // memset(&tss, 0x00, sizeof(tss)); 
-    // tss.esp0 = 0x600000; 
-    // tss.ss0 = KERNEL_DATA_SELECTOR; 
-
-    // tss_load(0x28);
-
-     // Setup paging
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
-    
-    // Switch to kernel paging chunk
+    // ---- Paging ----
+    kernel_chunk = paging_new_4gb(
+        PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL
+    );
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
 
-    char* ptr = kzalloc(4096); 
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT | PAGING_IS_WRITEABLE);
+    char* ptr = kzalloc(4096);
+    paging_set(
+        paging_4gb_chunk_get_directory(kernel_chunk),
+        (void*)0x1000,
+        (uint32_t)ptr | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT | PAGING_IS_WRITEABLE
+    );
 
-    // Enable paging
     enable_paging();
-
     enable_interrupts();
 
-    //=== NEW: init VGA + PIT ===
+    // ---------- NES pattern-table viewer ----------
+    // 1) Load ROM + CHR into PPU
+    ppu_init();
+
+    // 2) Init VGA graphics
     vga_init();
-    // pit_init(1000); // 1000 Hz => 1ms ticks
-    //print("VGA and PIT initialized.\n");
+    vga_clear_screen(0x00);
 
-    // //Quick visual sanity test
-    // print("Drawing red screen for 2 seconds...\n");
-    vga_clear_screen(0x04);   // red
-    vga_swap_buffers();
-    // pit_sleep(2000);
+    // 3) Draw the pattern tables to the top of the VGA screen
+    ppu_draw_pattern_tables();
 
-    // print("Drawing blue screen for 2 seconds...\n");
-    // vga_clear_screen(0x01);   // blue
-    // vga_swap_buffers();
-    // pit_sleep(2000);
-
-    // print("Back to text mode kernel loop.\n");
-
-    emu_enable_logger(true);
-    emu_init();
-    //ppu_init();
-
-    while(1) {} 
-
+    // 4) Done – just halt forever
+    while (1) {
+        asm volatile("hlt");
+    }
 }

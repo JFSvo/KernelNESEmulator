@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define DEBUG false
-#define TRACELOGGER true
+#define TRACELOGGER false
 
 #define RAM_SIZE 800 
 #define ROM_SIZE 8000 
