@@ -4,20 +4,32 @@
 #include "emulator/CPU/emulator.h"
 
 void handle_scancode(uint8_t byte){
-    if(!emulator_initialized){
-        return;
-    }
     switch(byte){
         case 0x11: // a key
-            #if TRACELOGGER
-            scroll_up();
-            #endif
+            if(rom_selected){
+                #if TRACELOGGER
+                scroll_up(); // s key
+                #endif
+            } else {
+                decrement_cursor();
+            }
+
             break;
-        case 0x1F:
-            #if TRACELOGGER
-            scroll_down(); // s key
-            #endif
+        case 0x1F:  
+            if(rom_selected){
+                #if TRACELOGGER
+                scroll_down(); // s key
+                #endif
+            } else {
+                increment_cursor();
+            }
+
             break;
 
+        case 0x1C:
+            if(kernel_initialized){
+                rom_selected = true;
+            }
+            break;
     }
 }

@@ -29,7 +29,7 @@ struct registers {
 };
 
 struct emulator { 
-    char* filepath;
+    const char* filepath;
 
     struct registers registers;
 
@@ -43,7 +43,7 @@ struct emulator {
 
 void emu_enable_logger(bool is_enabled);
 
-void emu_init();
+void emu_init(const char* filepath);
 void emu_reset();
 void emu_run();
 uint8_t emu_read(uint16_t address);

@@ -14,12 +14,12 @@ struct emulator emu;
 bool CPU_halted;
 bool logger_enabled = false;
 
-void emu_init()  { 
+void emu_init(const char* filepath)  { 
     emu.RAM = kzalloc(0x800);
     emu.ROM = kzalloc(0x8000);
     emu.header = kzalloc(0x10);
+    emu.filepath = filepath;
     emu.total_CPU_cycles = 8;
-    emu.filepath = "0:/test6.nes";
     CPU_halted = false;
     emu_reset();
 }
@@ -643,10 +643,6 @@ void emulate_CPU() {
     compare_with_table(opcode, initial_PC);
     #endif
 
-    #if TRACELOGGER
-    print_latest_tracelog_entry();
-    #endif
-
     emu.total_CPU_cycles += opcode_table[opcode].cycles;
 }
 
@@ -656,7 +652,6 @@ void emu_run() {
     }
     #if TRACELOGGER
     tracelog_print_entries();
-    emulator_initialized = true;
     #endif
 }
 

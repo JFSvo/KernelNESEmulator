@@ -40,8 +40,6 @@ void tail_log_set_read_value(uint8_t byte);
 
 void tracelog_print_entries();
 
-void print_tracelog();
-void print_latest_tracelog_entry();
 void print_tracelog_entry(struct tracelog_entry* entry);
 void print_tracelog_operands(struct tracelog_entry* cur_log_entry, const struct opcode_entry* opcode_entry);
 void print_tracelog_address(struct tracelog_entry* cur_log_entry, uint16_t address);

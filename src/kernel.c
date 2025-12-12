@@ -30,11 +30,15 @@ struct gdt_structured gdt_structured[PEACHOS_TOTAL_GDT_SEGMENTS] = {
 //   {.base = (uint32_t)&tss, .limit=sizeof(tss), .type = 0xE9}// TSS Segment
 };
 
-bool emulator_initialized = false;
+bool kernel_initialized = false;
+bool rom_selected = false;
 
 uint16_t* video_mem = 0;  
 uint16_t terminal_row = 0;  
 uint16_t terminal_col = 0;  
+int cursor_index = 0;
+
+const char* test_roms[6];
 
 uint16_t terminal_make_char(char c, char colour)  {  
     return (colour << 8) | c;  
@@ -191,24 +195,69 @@ void kernel_main()  {
     enable_interrupts();
 
     //=== NEW: init VGA + PIT ===
-    vga_init();
-    pit_init(1000); // 1000 Hz => 1ms ticks
-    print("VGA and PIT initialized.\n");
+    // vga_init();
+    // pit_init(1000); // 1000 Hz => 1ms ticks
 
-    // Quick visual sanity test
-    print("Drawing red screen for 2 seconds...\n");
-    vga_clear_screen(0x04);   // red
-    vga_swap_buffers();
-    pit_sleep(2000);
+    // // Quick visual sanity test
+    // vga_clear_screen(0x04);   // red
+    // vga_swap_buffers();
+    // //pit_sleep(2000);
 
-    print("Drawing blue screen for 2 seconds...\n");
-    vga_clear_screen(0x01);   // blue
-    vga_swap_buffers();
-    pit_sleep(2000);
+    // vga_clear_screen(0x01);   // blue
+    // vga_swap_buffers();
+    //pit_sleep(2000);
 
+    kernel_initialized = true;
+
+    test_roms[0] = "0:/test1.nes";
+    test_roms[1] = "0:/test2.nes";
+    test_roms[2] = "0:/test3.nes";
+    test_roms[3] = "0:/test4.nes";
+    test_roms[4] = "0:/test5.nes";
+    test_roms[5] = "0:/test6.nes";
+
+    draw_menu();
+    while(!rom_selected) {
+        
+    } 
+    terminal_initialize();
     emu_enable_logger(true);
-    emu_init();
+    emu_init(test_roms[cursor_index]);
+}
 
-    while(1) {} 
+void draw_menu(){
+    reset_terminal();     
+    print("\n");                                                                               
+    print("  mm   m mmmmm  mmmm                          \"\"#           m              \n");   
+    print("  #\"m  # #     #\"   \"      mmm   mmmmm  m   m   #    mmm  mm#mm   mmm   m mm \n");
+    print("  # #m # #mmmm \"#mmm      #\"  #  # # #  #   #   #   \"   #   #    #\" \"#  #\"  \"\n");
+    print("  #  # # #         \"#     #\"\"\"\"  # # #  #   #   #   m\"\"\"#   #    #   #  #    \n");
+    print("  #   ## #mmmm \"mmm#\"     \"#mm\"  # # #  \"mm\"#   \"mm \"mm\"#   \"mm  \"#m#\"  #    \n");
+    print("\n"); 
+    print("\n"); 
+    print("   Press the W and S keys to select an NES rom, \n");
+    print("   then press Enter to run it in the emulator. \n\n"); 
+    print("   Once it runs, you can scroll through the tracelog with the W and S keys.\n\n");
+    for(int i = 0; i < NUM_ROMS-1; i++){
+        print_spaces(5);
+        if(cursor_index == i){
+            print(" > ");
+        }
+        print(test_roms[i]);
+        print("\n");
+    }
+}
 
+void increment_cursor(){
+    if(cursor_index < NUM_ROMS-2){
+        cursor_index++;
+    }
+    draw_menu();
+}
+
+void decrement_cursor(){
+    if(cursor_index > 0){
+        cursor_index--;
+    }
+    draw_menu();
 }

@@ -9,6 +9,8 @@
 
 #define PEACHOS_MAX_PATH 108
 
+#define NUM_ROMS 7
+
 #define ERROR(value) (void*)(value) 
 #define ERROR_I(value) (int)(value) 
 #define ISERR(value) ((int)value < 0)
@@ -18,6 +20,7 @@ void kernel_main();
 void reset_terminal();
 
 void print(const char* str);
+void print_color(const char* str, char color);
 void print_spaces(int num_spaces);
 void panic(const char* msg);
 void print_hexdump(const uint8_t* data, int size);
@@ -27,6 +30,12 @@ void print_hex16(uint16_t value);
 void print_decimal(int value);
 void print_binary(uint8_t value);
 
-extern bool emulator_initialized;
+void increment_cursor();
+void decrement_cursor();
+
+void draw_menu();
+
+extern bool kernel_initialized;
+extern bool rom_selected;
 
 #endif

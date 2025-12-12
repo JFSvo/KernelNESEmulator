@@ -108,21 +108,6 @@ void remove_first_entry() {
     current_length--;
 }
 
-void print_tracelog() {
-    struct tracelog_entry* cur_log_entry = log_head;
-    while(cur_log_entry != NULL) {
-        //print_tracelog_entry();
-
-        cur_log_entry = cur_log_entry->next;
-    }
-}
-
-void print_latest_tracelog_entry() {
-    if(current_length >= 00 && current_length < 30){
-        //print_tracelog_entry(log_tail);
-    }
-}
-
 void print_tracelog_entry(struct tracelog_entry* cur_log_entry) {
     print_hex16(cur_log_entry->registers.program_counter);
     const struct opcode_entry* opcode_entry = &opcode_table[cur_log_entry->opcode];
@@ -260,7 +245,7 @@ void print_tracelog_indirect_indexed(struct tracelog_entry* cur_log_entry, char 
 void tracelog_print_entries(){
     reset_terminal();
     struct tracelog_entry* print_entry = cur_selected_entry;
-    for(int i = 0; i <= NUM_PRINT_ENTRIES; i++){
+    for(int i = 0; i <= NUM_PRINT_ENTRIES && i <= current_length; i++){
         print_tracelog_entry(print_entry);
         if(print_entry != log_tail){
             print_entry = print_entry->next;
