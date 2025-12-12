@@ -18,13 +18,16 @@ DIRS = \
     build/gdt \
     build/task \
     build/emulator \
+	build/emulator/CPU \
+	build/emulator/PPU \
     build/drivers \
     build/drivers/timer \
     build/drivers/vga \
+	build/drivers/keyboard \
     bin
 
 
-all: ./bin/boot_$(MODE).bin ./bin/kernel.bin
+all: dirs ./bin/boot_$(MODE).bin ./bin/kernel.bin
 	rm -rf ./bin/os.bin 
 	dd if=./bin/boot_$(MODE).bin >> ./bin/os.bin 
 	dd if=./bin/kernel.bin >> ./bin/os.bin 
@@ -34,8 +37,10 @@ all: ./bin/boot_$(MODE).bin ./bin/kernel.bin
 	# Copy a file over
 	sudo cp ./hello.txt /mnt/d
 	sudo cp ./roms/testing/* /mnt/d
-	sudo cp ./roms/SMB/* /mnt/d
 	sudo umount /mnt/d
+
+dirs:
+	mkdir -p $(DIRS)
 
 ./bin/kernel.bin: $(FILES) 
 	i686-elf-ld -g -relocatable $(FILES) -o ./build/kernelfull.o
