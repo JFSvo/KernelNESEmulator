@@ -30,6 +30,8 @@ struct gdt_structured gdt_structured[PEACHOS_TOTAL_GDT_SEGMENTS] = {
 //   {.base = (uint32_t)&tss, .limit=sizeof(tss), .type = 0xE9}// TSS Segment
 };
 
+bool emulator_initialized = false;
+
 uint16_t* video_mem = 0;  
 uint16_t terminal_row = 0;  
 uint16_t terminal_col = 0;  
@@ -190,25 +192,22 @@ void kernel_main()  {
 
     //=== NEW: init VGA + PIT ===
     vga_init();
-    // pit_init(1000); // 1000 Hz => 1ms ticks
-    //print("VGA and PIT initialized.\n");
+    pit_init(1000); // 1000 Hz => 1ms ticks
+    print("VGA and PIT initialized.\n");
 
-    // //Quick visual sanity test
-    // print("Drawing red screen for 2 seconds...\n");
+    // Quick visual sanity test
+    print("Drawing red screen for 2 seconds...\n");
     vga_clear_screen(0x04);   // red
     vga_swap_buffers();
-    // pit_sleep(2000);
+    pit_sleep(2000);
 
-    // print("Drawing blue screen for 2 seconds...\n");
-    // vga_clear_screen(0x01);   // blue
-    // vga_swap_buffers();
-    // pit_sleep(2000);
-
-    // print("Back to text mode kernel loop.\n");
+    print("Drawing blue screen for 2 seconds...\n");
+    vga_clear_screen(0x01);   // blue
+    vga_swap_buffers();
+    pit_sleep(2000);
 
     emu_enable_logger(true);
     emu_init();
-    //ppu_init();
 
     while(1) {} 
 

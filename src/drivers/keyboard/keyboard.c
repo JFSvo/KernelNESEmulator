@@ -4,6 +4,9 @@
 #include "emulator/CPU/emulator.h"
 
 void handle_scancode(uint8_t byte){
+    if(!emulator_initialized){
+        return;
+    }
     switch(byte){
         case 0x11: // a key
             #if TRACELOGGER

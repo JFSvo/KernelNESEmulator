@@ -2,6 +2,7 @@
 #define KERNEL_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 20
@@ -25,5 +26,7 @@ void print_hex8(uint8_t value);
 void print_hex16(uint16_t value);
 void print_decimal(int value);
 void print_binary(uint8_t value);
+
+extern bool emulator_initialized;
 
 #endif

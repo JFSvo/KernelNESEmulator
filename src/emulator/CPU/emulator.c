@@ -656,6 +656,7 @@ void emu_run() {
     }
     #if TRACELOGGER
     tracelog_print_entries();
+    emulator_initialized = true;
     #endif
 }
 
@@ -689,30 +690,9 @@ void emu_write(uint16_t address, uint8_t value){
     debug_tracker.writes_mem = true; 
     #endif 
 
-    if(address < 0x2000){
-        emu.RAM[address & 0x7FF] = value;
-    } else if (address < 0x4000){
-        // Writing to PPU registers
-        address &= 0x2007;
-        switch(address){
-            case 0x2000: // PPUCTRL
-                ppu.registers.write_latch = true;
-                break;
-            case 0x2001: // PPUMASK
-                break;
-            case 0x2002: // PPUSTATUS
-                break;
-            case 0x2003: // OAMADDR
-                break;
-            case 0x2004: // OAMDATA
-                break;
-            case 0x2005: // PPUSCROLL
-                break;
-            case 0x2006: // PPUADDR
-                break;
-            case 0x2007: // PPUDATA
-                break;
-        }
+    if(address < 0x800){
+        emu.RAM[address] = value;
+    } else {
         return;
     }
 
@@ -720,7 +700,6 @@ void emu_write(uint16_t address, uint8_t value){
     tail_log_set_written_value(value);
     #endif
 }
-
 
 void push_stack(uint8_t value){
     emu_write(0x100+emu.registers.stack_pointer, value);
