@@ -97,14 +97,14 @@ void print_hexdump(const uint8_t* data, int size)  {
     }  
 }  
 
-void emu_print_hexdump(uint16_t emu_address, int size)  {  
-    for (int i = 0; i < size+1; i++) {
-        uint8_t byte = emu_read(emu_address+i);
-        terminal_writechar(gethexchar(byte >> 4), 15); 
-        terminal_writechar(gethexchar(byte & 0xF), 15);
-        terminal_writechar(' ', 0);    
-    }  
-}  
+// void emu_print_hexdump(uint16_t emu_address, int size)  {  
+//     for (int i = 0; i < size+1; i++) {
+//         uint8_t byte = emu_read(emu_address+i);
+//         terminal_writechar(gethexchar(byte >> 4), 15); 
+//         terminal_writechar(gethexchar(byte & 0xF), 15);
+//         terminal_writechar(' ', 0);    
+//     }  
+// }  
 
 void print_hex8(uint8_t value)  {  
     terminal_writechar(gethexchar(value >> 4), 15); 
@@ -151,65 +151,47 @@ void panic(const char*msg){
 
 static struct paging_4gb_chunk* kernel_chunk = 0;
 
-void kernel_main()  {  
-    terminal_initialize();  
+void kernel_main() {
+    terminal_initialize();
 
-    // GDT CODE
-    memset(gdt_real, 0x00, sizeof(gdt_real)); 
-    gdt_structured_to_gdt(gdt_real, gdt_structured, PEACHOS_TOTAL_GDT_SEGMENTS); 
-    gdt_load(gdt_real, sizeof(gdt_real)); 
+    // ---- GDT ----
+    memset(gdt_real, 0x00, sizeof(gdt_real));
+    gdt_structured_to_gdt(gdt_real, gdt_structured, PEACHOS_TOTAL_GDT_SEGMENTS);
+    gdt_load(gdt_real, sizeof(gdt_real));
 
+    // ---- Heap, FS, disks ----
     kheap_init();
-    
     fs_init();
-
     disk_search_and_init();
-    
+
+    // ---- IDT ----
     idt_init();
 
-    // Setup the TSS 
-    // memset(&tss, 0x00, sizeof(tss)); 
-    // tss.esp0 = 0x600000; 
-    // tss.ss0 = KERNEL_DATA_SELECTOR; 
-
-    // tss_load(0x28);
-
-     // Setup paging
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
-    
-    // Switch to kernel paging chunk
+    // ---- Paging ----
+    kernel_chunk = paging_new_4gb(
+        PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL
+    );
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
 
-    char* ptr = kzalloc(4096); 
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT | PAGING_IS_WRITEABLE);
+    char* ptr = kzalloc(4096);
+    paging_set(
+        paging_4gb_chunk_get_directory(kernel_chunk),
+        (void*)0x1000,
+        (uint32_t)ptr | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT | PAGING_IS_WRITEABLE
+    );
 
-    // Enable paging
     enable_paging();
-
     enable_interrupts();
 
-    //=== NEW: init VGA + PIT ===
-    vga_init();
-    // pit_init(1000); // 1000 Hz => 1ms ticks
-    //print("VGA and PIT initialized.\n");
+    // Color Demo
+    pit_init(1000);      // 1000 Hz -> 1 tick ≈ 1 ms
+    vga_init();          // 320x200x256
+    uint8_t color = 0x01;
 
-    // //Quick visual sanity test
-    // print("Drawing red screen for 2 seconds...\n");
-    vga_clear_screen(0x04);   // red
-    vga_swap_buffers();
-    // pit_sleep(2000);
-
-    // print("Drawing blue screen for 2 seconds...\n");
-    // vga_clear_screen(0x01);   // blue
-    // vga_swap_buffers();
-    // pit_sleep(2000);
-
-    // print("Back to text mode kernel loop.\n");
-
-    emu_enable_logger(true);
-    emu_init();
-    //ppu_init();
-
-    while(1) {} 
-
+    while (1) {
+        vga_clear_screen(color);
+        vga_swap_buffers();
+        pit_sleep(500);  // ~500 ms
+        color++;         // next color
+    }
 }
