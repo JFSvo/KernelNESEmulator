@@ -5,4 +5,6 @@
 
 void handle_scancode(uint8_t byte);
 
+void keyboard_init(void);
+
 #endif

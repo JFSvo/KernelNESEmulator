@@ -1,4 +1,4 @@
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/string/string.o ./build/fs/pparser.o ./build/disk/streamer.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/emulator/CPU/emulator.o ./build/emulator/CPU/tracelogger.o ./build/emulator/CPU/opcode_table.o ./build/emulator/CPU/emulator_debug.o ./build/emulator/PPU/ppu.o ./build/drivers/timer/pit.o ./build/drivers/vga/vga.o ./build/drivers/keyboard/keyboard.o
+FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/string/string.o ./build/fs/pparser.o ./build/disk/streamer.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/emulator/CPU/emulator.o ./build/emulator/CPU/tracelogger.o ./build/emulator/CPU/opcode_table.o ./build/emulator/CPU/emulator_debug.o ./build/emulator/PPU/ppu.o ./build/drivers/timer/pit.o ./build/drivers/vga/vga.o ./build/drivers/keyboard/keyboard.o ./build/tictactoe.o
 # ./build/task/tss.asm.o ./build/task/task.o ./build/task/task.asm.o ./build/task/process.o
 INCLUDES = -I ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc 
@@ -52,6 +52,9 @@ endif
 
 ./build/kernel.o: ./src/kernel.c 
 	i686-elf-gcc $(INCLUDES) $(FLAGS) -std=gnu99 -c ./src/kernel.c -o ./build/kernel.o
+
+./build/tictactoe.o: ./src/tictactoe.c
+	i686-elf-gcc $(INCLUDES) $(FLAGS) -std=gnu99 -c ./src/tictactoe.c -o ./build/tictactoe.o
 
 ./build/idt/idt.asm.o: ./src/idt/idt.asm  
 	nasm -f elf -g ./src/idt/idt.asm -o ./build/idt/idt.asm.o  

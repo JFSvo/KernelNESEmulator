@@ -18,6 +18,8 @@
 #include "emulator/PPU/ppu.h"
 #include "drivers/timer/pit.h"
 #include "drivers/vga/vga.h"
+#include "tictactoe.h"
+#include "drivers/keyboard/keyboard.h"
 
 //struct tss tss; 
 struct gdt gdt_real[PEACHOS_TOTAL_GDT_SEGMENTS]; 
@@ -180,18 +182,20 @@ void kernel_main() {
         (uint32_t)ptr | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT | PAGING_IS_WRITEABLE
     );
 
+  // ---- Enable paging & interrupts ----
     enable_paging();
     enable_interrupts();
 
-    // Color Demo
-    pit_init(1000);      // 1000 Hz -> 1 tick ≈ 1 ms
-    vga_init();          // 320x200x256
-    uint8_t color = 0x01;
+    // ---- VGA + PIT setup ----
+    pit_init(1000);   // 1000 Hz timer
+    vga_init();       // 320x200x256 graphics mode
 
+    // Initialize tic tac toe once
+    tictactoe_init();
+
+    // Main game loop
     while (1) {
-        vga_clear_screen(color);
-        vga_swap_buffers();
-        pit_sleep(500);  // ~500 ms
-        color++;         // next color
+        tictactoe_update_and_draw();  // draw board or winner screen
+        pit_sleep(16);                // ~60 FPS (16 ms per frame)
     }
 }

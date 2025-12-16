@@ -8,4 +8,3 @@ build/kernelfull.o
 build/disk/disk.o
 build/memory/memory.o
 build/memory/paging/paging.o
-roms/SMB/SMB.nes
