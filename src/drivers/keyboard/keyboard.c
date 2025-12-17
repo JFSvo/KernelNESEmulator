@@ -1,7 +1,7 @@
+#include <stdint.h>
 #include "keyboard.h"
-#include "kernel.h"
+#include "tictactoe.h"
 #include "emulator/CPU/tracelogger.h"
-#include "emulator/CPU/emulator.h"
 
 void handle_scancode(uint8_t byte){
     switch(byte){
@@ -26,4 +26,7 @@ void handle_scancode(uint8_t byte){
             // enter key
             break;
     }
+
+    // 2) Always forward key to the game
+    tictactoe_on_key(byte);
 }
