@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include "drivers/vga/vga.h"
 #include "tictactoe.h"
+#include "kernel.h"
+#include "emulator/CPU/emulator.h"
 
 #define CELL_SIZE 40
 #define BOARD_X   40   // top-left of the tic tac toe board
@@ -12,16 +14,7 @@
 #define COLOR_GRID    0x0F  // white grid lines
 #define COLOR_CURSOR  0x0F  // white border for cursor
 
-// board[i] values:
-//   0x00 = empty
-//   0x0A = X (red)
-//   0x0B = O (blue)
-static uint8_t board[9];
-
-// game_state:
-//   0x00 = playing
-//   0x0A = X wins (red)
-//   0x0B = O wins (blue)
+// game_state:      0x00 = playing     0x0A = X wins (red)    0x0B = O wins (blue)
 static uint8_t game_state;
 
 // whose turn? 0x0A = X, 0x0B = O
@@ -135,10 +128,10 @@ static void draw_board(void)
         draw_rect(x0 + 1, y0 + 1, CELL_SIZE - 2, CELL_SIZE - 2, COLOR_BG);
 
         // Draw piece if present
-        if (board[i] == 0x0A) {
+        if (emu_read(TTT_BOARD + i) == 0x0A) {
             draw_x_symbol(x0, y0);
         }
-        else if (board[i] == 0x0B) {
+        else if (emu_read(TTT_BOARD + i) == 0x0B) {
             draw_o_symbol(x0, y0);
         }
 
@@ -149,40 +142,7 @@ static void draw_board(void)
     }
 }
 
-
-
-// returns 0x0A if X wins, 0x0B if O wins, or 0x00 if no winner
-static uint8_t check_winner(void)
-{
-    static const int lines[8][3] = {
-        {0,1,2}, {3,4,5}, {6,7,8}, // rows
-        {0,3,6}, {1,4,7}, {2,5,8}, // columns
-        {0,4,8}, {2,4,6}           // diagonals
-    };
-
-    for (int i = 0; i < 8; i++) {
-        int a = lines[i][0];
-        int b = lines[i][1];
-        int c = lines[i][2];
-
-        uint8_t v = board[a];
-        if (v == 0x0A || v == 0x0B) {
-            if (board[b] == v && board[c] == v) {
-                return v;  // 0x0A or 0x0B
-            }
-        }
-    }
-
-    return 0x00;
-}
-
-
-void tictactoe_init(void)
-{
-    for (int i = 0; i < 9; i++) {
-        board[i] = 0x00;
-    }
-
+void tictactoe_init(void) {
     game_state     = 0x00;  // playing
     current_player = 0x0A;  // X starts
     cursor_index   = 4;     // center cell
@@ -206,29 +166,26 @@ void tictactoe_on_key(uint8_t scancode)
     }
 
     switch (scancode) {
-        // W = up
-        case 0x11:
+
+        case 0x11:   // W = up
             if (cursor_index >= 3) {
                 cursor_index -= 3;
             }
             break;
 
-        // S = down
-        case 0x1F:
+        case 0x1F:   // S = down
             if (cursor_index <= 5) {
                 cursor_index += 3;
             }
             break;
 
-        // A = left
-        case 0x1E:
+        case 0x1E:   // A = left
             if ((cursor_index % 3) != 0) {
                 cursor_index -= 1;
             }
             break;
 
-        // D = right
-        case 0x20:
+        case 0x20:   // D = right
             if ((cursor_index % 3) != 2) {
                 cursor_index += 1;
             }
@@ -237,20 +194,10 @@ void tictactoe_on_key(uint8_t scancode)
         // Space or Enter = place piece
         case 0x39:  // Space
         case 0x1C:  // Enter
-            if (board[cursor_index] == 0x00) {
+            if (emu_read(TTT_BOARD + cursor_index) == 0x00) {
                 // place current player's piece
-                board[cursor_index] = current_player;
-
-                // check for winner
-                {
-                    uint8_t w = check_winner();
-                    if (w == 0x0A || w == 0x0B) {
-                        game_state = w;  // X or O wins
-                    } else {
-                        // switch player
-                        current_player = (current_player == 0x0A) ? 0x0B : 0x0A;
-                    }
-                }
+                emu_write(TTT_BOARD + cursor_index, current_player);
+                current_player = (current_player == 0x0A) ? 0x0B : 0x0A;
             }
             break;
 
@@ -260,12 +207,22 @@ void tictactoe_on_key(uint8_t scancode)
     }
 }
 
+void tictactoe_check_winner(){
+    uint8_t w = emu_read(WIN_BYTE);
+    print_hex8(emu_read(WIN_BYTE));
+    if (w == 0x0A || w == 0x0B) {
+        game_state = w;  // X or O wins
+    }     
+}
+
 // Called every frame from kernel_main
 void tictactoe_update_and_draw(void)
 {
     if (!initialized) {
         tictactoe_init();
     }
+
+    tictactoe_check_winner();
 
     // Winner screens
     if (game_state == 0x0A) {

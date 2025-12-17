@@ -196,18 +196,17 @@ void kernel_main() {
     pit_init(1000);   // 1000 Hz timer
     vga_init();       // 320x200x256 graphics mode
 
-    // Initialize tic tac toe once
+    kernel_initialized = true;
     tictactoe_init();
-
-    // Main game loop
-    while (1) {
-        tictactoe_update_and_draw();  // draw board or winner screen
-        pit_sleep(16);                // ~60 FPS (16 ms per frame)
-    }
-
+    
     emu_enable_logger(true);
     emu_init("0:/TTT.nes");
 
-    while(1) {} 
+    // Main game loop
+    while (1) {
+        tictactoe_update_and_draw();
+        emulate_CPU();                
+        pit_sleep(8);                
+    }
 
 }

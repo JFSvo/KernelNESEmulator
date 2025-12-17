@@ -25,9 +25,9 @@ void emu_init(const char* filepath)  {
 }
 
 void emulate_CPU() {
-    reset_tracker();
     
     #if DEBUG
+    reset_tracker();
     uint16_t initial_PC = emu.registers.program_counter;
     #endif
 
@@ -739,7 +739,6 @@ void emu_reset(){
     emu.registers.program_counter = (PC_highbyte << 8) | PC_lowbyte;
     emu.registers.stack_pointer = 0xFD;
     print("\n");
-    emu_run();
 }
 
 uint8_t read_increment_PC(){

@@ -2,6 +2,7 @@
 #include "keyboard.h"
 #include "tictactoe.h"
 #include "emulator/CPU/tracelogger.h"
+#include "kernel.h"
 
 void handle_scancode(uint8_t byte){
     switch(byte){

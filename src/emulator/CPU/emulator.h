@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define DEBUG false
-#define TRACELOGGER true
+#define TRACELOGGER false
 
 #define RAM_SIZE 800 
 #define ROM_SIZE 8000 
@@ -46,6 +46,7 @@ void emu_enable_logger(bool is_enabled);
 void emu_init(const char* filepath);
 void emu_reset();
 void emu_run();
+void emulate_CPU();
 uint8_t emu_read(uint16_t address);
 void emu_write(uint16_t address, uint8_t value);
 void push_stack(uint8_t value);
