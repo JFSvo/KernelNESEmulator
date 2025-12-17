@@ -647,7 +647,7 @@ void emulate_CPU() {
 }
 
 void emu_run() { 
-    while(!CPU_halted && emu.total_CPU_cycles < 1000){
+    while(!CPU_halted && emu.total_CPU_cycles < 500){
         emulate_CPU();
     }
     #if TRACELOGGER

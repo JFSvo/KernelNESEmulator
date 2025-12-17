@@ -37,6 +37,7 @@ all: dirs ./bin/boot_$(MODE).bin ./bin/kernel.bin
 	# Copy a file over
 	sudo cp ./hello.txt /mnt/d
 	sudo cp ./roms/testing/* /mnt/d
+	sudo cp ./roms/tictactoe/* /mnt/d
 	sudo umount /mnt/d
 
 dirs:

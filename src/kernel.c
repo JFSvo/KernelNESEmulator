@@ -209,55 +209,7 @@ void kernel_main()  {
 
     kernel_initialized = true;
 
-    test_roms[0] = "0:/test1.nes";
-    test_roms[1] = "0:/test2.nes";
-    test_roms[2] = "0:/test3.nes";
-    test_roms[3] = "0:/test4.nes";
-    test_roms[4] = "0:/test5.nes";
-    test_roms[5] = "0:/test6.nes";
-
-    draw_menu();
-    while(!rom_selected) {
-        
-    } 
     terminal_initialize();
     emu_enable_logger(true);
-    emu_init(test_roms[cursor_index]);
-}
-
-void draw_menu(){
-    reset_terminal();     
-    print("\n");                                                                               
-    print("  mm   m mmmmm  mmmm                          \"\"#           m              \n");   
-    print("  #\"m  # #     #\"   \"      mmm   mmmmm  m   m   #    mmm  mm#mm   mmm   m mm \n");
-    print("  # #m # #mmmm \"#mmm      #\"  #  # # #  #   #   #   \"   #   #    #\" \"#  #\"  \"\n");
-    print("  #  # # #         \"#     #\"\"\"\"  # # #  #   #   #   m\"\"\"#   #    #   #  #    \n");
-    print("  #   ## #mmmm \"mmm#\"     \"#mm\"  # # #  \"mm\"#   \"mm \"mm\"#   \"mm  \"#m#\"  #    \n");
-    print("\n"); 
-    print("\n"); 
-    print("   Press the W and S keys to select an NES rom, \n");
-    print("   then press Enter to run it in the emulator. \n\n"); 
-    print("   Once it runs, you can scroll through the tracelog with the W and S keys.\n\n");
-    for(int i = 0; i < NUM_ROMS-1; i++){
-        print_spaces(5);
-        if(cursor_index == i){
-            print(" > ");
-        }
-        print(test_roms[i]);
-        print("\n");
-    }
-}
-
-void increment_cursor(){
-    if(cursor_index < NUM_ROMS-2){
-        cursor_index++;
-    }
-    draw_menu();
-}
-
-void decrement_cursor(){
-    if(cursor_index > 0){
-        cursor_index--;
-    }
-    draw_menu();
+    emu_init("0:/TTT.nes");
 }

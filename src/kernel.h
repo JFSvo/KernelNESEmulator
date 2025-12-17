@@ -30,9 +30,6 @@ void print_hex16(uint16_t value);
 void print_decimal(int value);
 void print_binary(uint8_t value);
 
-void increment_cursor();
-void decrement_cursor();
-
 void draw_menu();
 
 extern bool kernel_initialized;
