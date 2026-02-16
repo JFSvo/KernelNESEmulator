@@ -1,2 +1,11 @@
-bin/
-build/
+bin
+build
+bin/boot.bin
+bin/kernel.bin
+bin/os.bin
+build/kernel.o
+build/kernelfull.o
+build/disk/disk.o
+build/memory/memory.o
+build/memory/paging/paging.o
+roms/SMB/SMB.nes

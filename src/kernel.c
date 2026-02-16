@@ -10,25 +10,35 @@
 #include "memory/paging/paging.h"
 #include "disk/disk.h"
 #include "disk/streamer.h"
-#include "task/tss.h"
+// #include "task/tss.h"
 #include "string/string.h"
 #include "fs/pparser.h"
 #include "fs/file.h"
+#include "emulator/CPU/emulator.h"
+#include "emulator/PPU/ppu.h"
+#include "drivers/timer/pit.h"
+#include "drivers/vga/vga.h"
 
-struct tss tss; 
+//struct tss tss; 
 struct gdt gdt_real[PEACHOS_TOTAL_GDT_SEGMENTS]; 
 struct gdt_structured gdt_structured[PEACHOS_TOTAL_GDT_SEGMENTS] = { 
   {.base = 0x00, .limit = 0x00, .type = 0x00}, // NULL Segment 
   {.base = 0x00, .limit = 0xffffffff, .type = 0x9a}, // Kernel code segment 
   {.base = 0x00, .limit = 0xffffffff, .type = 0x92},// Kernel data segment 
-  {.base = 0x00, .limit = 0xffffffff, .type = 0xf8},// User code segment
-  {.base = 0x00, .limit = 0xffffffff, .type = 0xf2},// User data segment 
-  {.base = (uint32_t)&tss, .limit=sizeof(tss), .type = 0xE9}// TSS Segment
+//   {.base = 0x00, .limit = 0xffffffff, .type = 0xf8},// User code segment
+//   {.base = 0x00, .limit = 0xffffffff, .type = 0xf2},// User data segment 
+//   {.base = (uint32_t)&tss, .limit=sizeof(tss), .type = 0xE9}// TSS Segment
 };
+
+bool kernel_initialized = false;
+bool rom_selected = false;
 
 uint16_t* video_mem = 0;  
 uint16_t terminal_row = 0;  
 uint16_t terminal_col = 0;  
+int cursor_index = 0;
+
+const char* test_roms[6];
 
 uint16_t terminal_make_char(char c, char colour)  {  
     return (colour << 8) | c;  
@@ -40,6 +50,11 @@ void terminal_putchar(int x, int y, char c, char colour)  {
 
 void terminal_writechar(char c, char colour) {  
     if (c == '\n')  {
+        int temp_col = terminal_col;
+        while(temp_col <= VGA_WIDTH){
+            terminal_putchar(temp_col, terminal_row, ' ', 0); 
+            temp_col++; 
+        }
         terminal_row += 1;  
         terminal_col = 0;  
         return;  
@@ -50,6 +65,11 @@ void terminal_writechar(char c, char colour) {
         terminal_col = 0;  terminal_row += 1;  
     }  
 }  
+
+void reset_terminal(){
+    terminal_row = 0;  
+    terminal_col = 0;  
+}
 
 void terminal_initialize()  {  
     video_mem = (uint16_t*)(0xB8000);  
@@ -67,7 +87,68 @@ void print(const char* str)  {
     for (int i = 0; i < len; i++)  {  
         terminal_writechar(str[i], 15);  
     }  
+}
+
+void print_spaces(int num_spaces){
+    for(int i = 0; i <  num_spaces; i++){
+        print(" ");
+    }
+}
+
+void print_hexdump(const uint8_t* data, int size)  {  
+    for (int i = 0; i < size+1; i++) {
+        uint8_t byte = data[i];
+        terminal_writechar(gethexchar(byte >> 4), 15); 
+        terminal_writechar(gethexchar(byte & 0xF), 15);  
+    }  
 }  
+
+void emu_print_hexdump(uint16_t emu_address, int size)  {  
+    for (int i = 0; i < size+1; i++) {
+        uint8_t byte = emu_read(emu_address+i);
+        terminal_writechar(gethexchar(byte >> 4), 15); 
+        terminal_writechar(gethexchar(byte & 0xF), 15);
+        terminal_writechar(' ', 0);    
+    }  
+}  
+
+void print_hex8(uint8_t value)  {  
+    terminal_writechar(gethexchar(value >> 4), 15); 
+    terminal_writechar(gethexchar(value & 0xF), 15);  
+}  
+
+void print_hex16(uint16_t value)  {  
+    print_hex8((value >> 8) & 0xFF); 
+    print_hex8(value & 0xFF);  
+}  
+
+void print_decimal(int value) {
+    if (value == 0) {
+        terminal_writechar('0', 15);
+        return;
+    }
+
+    char digits[8];
+    int i = 0;
+
+    while (value > 0) {
+        digits[i++] = (value % 10) + '0';
+        value /= 10;
+    }
+
+    for (int j = i-1; j >= 0; j--) {
+        terminal_writechar(digits[j], 15);
+    }
+}
+
+void print_binary(uint8_t value) {
+    uint8_t mask = 0x80;
+    for(int i = 0; i < 8; i++){
+        char digit = value & mask ? '1' : '0';
+        terminal_writechar(digit, 15);
+        mask >>= 1;
+    }
+}
 
 void panic(const char*msg){
     print(msg);
@@ -78,7 +159,6 @@ static struct paging_4gb_chunk* kernel_chunk = 0;
 
 void kernel_main()  {  
     terminal_initialize();  
-    print("Hello world!\ntest");  
 
     // GDT CODE
     memset(gdt_real, 0x00, sizeof(gdt_real)); 
@@ -88,14 +168,18 @@ void kernel_main()  {
     kheap_init();
     
     fs_init();
+
+    disk_search_and_init();
     
     idt_init();
 
     // Setup the TSS 
-    memset(&tss, 0x00, sizeof(tss)); 
-    tss.esp0 = 0x600000; 
-    tss.ss0 = KERNEL_DATA_SELECTOR; 
-    
+    // memset(&tss, 0x00, sizeof(tss)); 
+    // tss.esp0 = 0x600000; 
+    // tss.ss0 = KERNEL_DATA_SELECTOR; 
+
+    // tss_load(0x28);
+
      // Setup paging
     kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     
@@ -108,28 +192,72 @@ void kernel_main()  {
     // Enable paging
     enable_paging();
 
-    disk_search_and_init();
-
     enable_interrupts();
 
-    int fd = fopen("0:/hello.txt", "r");
-    if(fd){
-        print("\nWe opened hello.txt\n");
-        char buf[14];
-        // fread(buf, 13, 1, fd);
-        fseek(fd, 2, SEEK_SET);
-        fread(buf, 11, 1, fd);
-        buf[13] = 0x00;
-        print(buf);
+    //=== NEW: init VGA + PIT ===
+    // vga_init();
+    // pit_init(1000); // 1000 Hz => 1ms ticks
 
-        struct file_stat s;
-        fstat(fd, &s);
+    // // Quick visual sanity test
+    // vga_clear_screen(0x04);   // red
+    // vga_swap_buffers();
+    // //pit_sleep(2000);
 
-        fclose(fd);
-        print("\ntesting fclose\n");
+    // vga_clear_screen(0x01);   // blue
+    // vga_swap_buffers();
+    //pit_sleep(2000);
+
+    kernel_initialized = true;
+
+    test_roms[0] = "0:/test1.nes";
+    test_roms[1] = "0:/test2.nes";
+    test_roms[2] = "0:/test3.nes";
+    test_roms[3] = "0:/test4.nes";
+    test_roms[4] = "0:/test5.nes";
+    test_roms[5] = "0:/test6.nes";
+
+    draw_menu();
+    while(!rom_selected) {
+        
+    } 
+    terminal_initialize();
+    emu_enable_logger(true);
+    emu_init(test_roms[cursor_index]);
+}
+
+void draw_menu(){
+    reset_terminal();     
+    print("\n");                                                                               
+    print("  mm   m mmmmm  mmmm                          \"\"#           m              \n");   
+    print("  #\"m  # #     #\"   \"      mmm   mmmmm  m   m   #    mmm  mm#mm   mmm   m mm \n");
+    print("  # #m # #mmmm \"#mmm      #\"  #  # # #  #   #   #   \"   #   #    #\" \"#  #\"  \"\n");
+    print("  #  # # #         \"#     #\"\"\"\"  # # #  #   #   #   m\"\"\"#   #    #   #  #    \n");
+    print("  #   ## #mmmm \"mmm#\"     \"#mm\"  # # #  \"mm\"#   \"mm \"mm\"#   \"mm  \"#m#\"  #    \n");
+    print("\n"); 
+    print("\n"); 
+    print("   Press the W and S keys to select an NES rom, \n");
+    print("   then press Enter to run it in the emulator. \n\n"); 
+    print("   Once it runs, you can scroll through the tracelog with the W and S keys.\n\n");
+    for(int i = 0; i < NUM_ROMS-1; i++){
+        print_spaces(5);
+        if(cursor_index == i){
+            print(" > ");
+        }
+        print(test_roms[i]);
+        print("\n");
     }
-    
+}
 
-    while(1) {} 
+void increment_cursor(){
+    if(cursor_index < NUM_ROMS-2){
+        cursor_index++;
+    }
+    draw_menu();
+}
 
+void decrement_cursor(){
+    if(cursor_index > 0){
+        cursor_index--;
+    }
+    draw_menu();
 }

@@ -41,6 +41,10 @@ step2:
     mov es, ax
     mov ss, ax
     mov sp, 0x7c00
+    %ifdef VGA_MODE
+        mov ax, 0x0013
+        int 0x10	
+    %endif
     sti ; Enable Interrupts
 
 .load_protected:

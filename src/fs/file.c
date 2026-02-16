@@ -148,23 +148,27 @@ int fopen(const char* filename, const char* mode_str) {
     // Ensure the disk we are reading from exists 
     struct disk* disk = disk_get(root_path->drive_no);
     if (!disk) { 
+        print("no disk");
         res = -EIO; 
         goto out; 
     } 
     
     if (!disk->filesystem) { 
+        print("no filesystem");
         res = -EIO; 
         goto out; 
     } 
 
     FILE_MODE mode = file_get_mode_by_string(mode_str);
     if (mode == FILE_MODE_INVALID) { 
+        print("invalid file mode");
         res = -EINVARG; 
         goto out; 
     } 
     
     void* descriptor_private_data = disk->filesystem->open(disk, root_path->first, mode); 
     if (ISERR(descriptor_private_data)) { 
+        print("err with descriptor private data");
         res = ERROR_I(descriptor_private_data); 
         goto out; 
     } 

@@ -82,14 +82,14 @@ int istrncmp(const char* s1, const char* s2, int n) {
     return 0; 
 }
 
-int strnlen_terminator(const char* str, int max, char terminator) { 
-    int i = 0; 
-    for(i = 0; i < max; i++) { 
-        if (str[i] == '\0' || str[i] == terminator) 
-            break; 
-    } 
-    return i; 
-}
+// int strnlen_terminator(const char* str, int max, char terminator) { 
+//     int i = 0; 
+//     for(i = 0; i < max; i++) { 
+//         if (str[i] == '\0' || str[i] == terminator) 
+//             break; 
+//     } 
+//     return i; 
+// }
 
 bool isdigit(char c) { 
     return c >= 48 && c <= 57; 
@@ -97,4 +97,9 @@ bool isdigit(char c) {
 
 int tonumericdigit(char c) { 
     return c - 48; 
+}
+
+char gethexchar(unsigned int value){
+    static const char* digits = "0123456789ABCDEF";
+    return digits[value];
 }
